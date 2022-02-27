@@ -1,0 +1,1591 @@
+if(!require(shiny)) install.packages("shiny")
+if(!require(shinythemes))install.packages("shinythemes")
+if(!require(network)) install.packages("network")
+if(!require(blockmodeling)) install.packages("blockmodeling")
+if(!require(igraph)) install.packages("igraph")
+if(!require(visNetwork))install.packages("visNetwork")
+if(!require(intergraph))install.packages("intergraph")
+
+library(shiny)
+library(shinythemes)
+library(blockmodeling)
+library(intergraph)
+library(igraph)
+library(network)
+library(visNetwork)
+
+# §1 Inputs ####
+ui <- fluidPage(
+  includeCSS("./style.css"), # CSS Styles
+  theme = shinytheme("united"),
+  tags$head(
+    tags$link(
+      rel = "shortcut icon",
+      href = "https://www.fdv.uni-lj.si/App_Themes/Fdv/TemplateImages/icons/favicon.ico")),
+  tags$head(
+    tags$title("Generalised blockmodeling")
+    ),
+
+
+
+    # 0. Title with HTML/CSS ####
+    titlePanel({
+      withTags({
+        div(class="Header",
+            table(
+              tr(
+                td(width = "267px",
+                  img(class = "HeaderLogo",
+                      src="https://www.uni-lj.si/images/mobile/logo_m.png"),
+                  ),
+                td(
+                  div(style="h1","Generalised blockmodeling"),
+                  ),
+                ), # /tr
+              ), # /table
+            div(class="titleRect",
+                div(class="title2",
+                    p('This app provides some useful tools for the analysis of one-mode networks withstructurally-equivalent nodes. Besides offering general summary info and a visualisation, this app allows also to perform a one-mode, generalised blockmodeling using the "homogeinity" method'),
+                    'To lean more about how this can be helpful to you, you can check the descriptions of the packages employed here:',
+                    a(href="https://cran.r-project.org/package=blockmodeling", "blockmodeling"),
+                    'by Ale\u0161 \u017Diberna and',
+                    a(href="https://cran.r-project.org/package=network", "network"),
+                    'by Carter Butts and others',
+                )# /div "title2"
+            )# /div "titleRect"
+            ) # div "Header"
+        
+        })
+    }),
+
+    
+    # Sidebar 
+    sidebarLayout(
+      sidebarPanel(
+        # 1. File-upload options ####
+          # "FileInputOpt1"
+        withTags({
+          div(h4(b("File-upload options")))
+        }),
+        # 1.1 Use a sample ####
+        # "Sample" 
+        checkboxInput(inputId = "Sample",
+                      label = 'Use a sample',
+                      value = F),
+        conditionalPanel(
+          condition = "input.Sample == false",
+          # 1.2 Select type of input ####
+          # "type"
+          selectInput(inputId = "type",
+                      label = "What type of data do you want to upload?",
+                      choice = c("Adjacency Matrix*"=1,"Edges list"=2, "Incidence matrix"=3,"Pajek"=4),
+                      selected = 1,
+                      multiple = FALSE
+          ),
+          conditionalPanel(
+            condition = "input.type != 4",
+            # 1.2.1 Upload list ####
+            # "List"
+            fileInput(inputId = "List",
+                      label = "Upload the selected list as a plain-text file",
+                      multiple = F,
+                      accept = c("text/plain", ".csv",".tab"),
+                      buttonLabel = "Browse",
+                      placeholder = "Your list here"),
+          
+            # 1.2.2 Headers edge list file ####
+            # "ListHeader"
+          checkboxInput(inputId = "ListHeader",
+                        label = 'Does the file have headers?',
+                        value = T,
+                        ),
+          # 2. Customise file elaboration ####
+          # "FileInputOpt2"
+          withTags({
+            div(h4(b("Customise file elaboration")))
+          }),
+          # 2.1 Separator ####
+          # "sep"
+          radioButtons(inputId = "sep",
+                       label = "What separator did you use?",
+                       choiceNames = c("tab","comma","semicolon","other"),
+                       choiceValues = c("\t",",",";","Other")
+          ),
+          conditionalPanel(
+            condition = "input.sep == 'Other'",
+            # 2.1.1 Other separator ####
+            # "OtherSep"
+            textAreaInput(inputId = "OtherSep",
+                          label = 'You selected "other", please indicate the right separator',
+                          cols = 3,
+                          value = "",
+            ),
+          ),
+          # 2.2 Trim blanks ####
+          # "whites"
+          checkboxInput(inputId = "whites",
+                        label = 'Should extra blanks be trimmed?',
+                        value = TRUE),
+          ),
+          conditionalPanel(
+            condition = "input.type == 4",
+            
+            # 3.1 Type of Pajek file ####
+            # "PajekInput"
+            radioButtons(inputId = "PajekInput",
+                         label = "What type of Pajek file do you want to upload?",
+                         selected = ".net",
+                         choiceNames = c(".mat",".net"),
+                         choiceValues = c("PajekMatrix","PajekNetwork")
+            ),
+            # 3.2 Upload Pajek file ####
+            # "PajekFile"
+              fileInput(inputId = "PajekFile",
+                        label = "Upload a Pajek file",
+                        multiple = F,
+                        buttonLabel = "Browse",
+                        placeholder = "Your Pajek file here",
+                        accept = c(".mat",".net")
+              ),
+            
+          ),
+        ),
+          #3. Specify network properties ####
+          # "NetworkOpt"
+          withTags({
+            div(h4(b("Specify network properties")))
+          }),
+        
+        # 3.1 Values/Weights ####
+        # "ValuedMatrix"
+        checkboxInput(inputId = "ValuedMatrix",
+                      label = 'Do the network\'s edges carry a value/weight?',
+                      value = TRUE,
+                      ),
+          # 3.1.1 Values/Weights name ####
+          # "ValuesName"
+        # conditionalPanel(
+        #   condition = "input.ValuedMatrix == true",
+        #   textInput(inputId = "ValuesName",
+        #             label = "How do you want the weights to be called?",
+        #             value = "weights",
+        #             placeholder = "weights, values, counts, etc...")
+        #   ),
+        withTags(div(
+          h6(b(i("Only change the settings below if needed"))),
+          h6("Defaults will work in most cases"),
+        )),
+          # 3.2 Direction ####
+          # "directionality"
+          checkboxInput(inputId = "directionality",
+                        label = 'Do the network\'s edges have direction?',
+                        value = TRUE,
+          ),
+          # 3.3 Self-links ####
+          # "loops"
+          checkboxInput(inputId = "loops",
+                        label = 'Are self-links allowed?',
+                        value = TRUE,
+          ),
+          # DISABLED # 3.4 Multiple ####
+          # "parallel"
+          # checkboxInput(inputId = "parallel",
+          #               label = 'Are parallel edges allowed?',
+          #               value = TRUE),
+        
+        # 3.5 Button "Read data" ####
+          # "aj"
+        actionButton(inputId = "aj",
+                     label = "Read Data",
+                     icon = icon(name = "upload",
+                                 lib = "font-awesome")
+        )
+        ),
+        
+        mainPanel(
+          tabsetPanel(
+            tabPanel(title = "Summary",
+                     
+                     # 4. Show the network's summary ####
+                     # "summary"
+                     verbatimTextOutput("summary"),
+                     
+                     # 4.1  Summary with adj ####
+                     # "NetworkSummaryOpt"
+                     withTags({
+                       div(h4(b("An extra option")))
+                     }),
+                     
+                     # "IncludeAdj"
+                     checkboxInput(inputId = "IncludeAdj",
+                                   label = 'Should the summary include the edgelist matrix?',
+                                   value = F,
+                                   width = "100%"
+                                   ),
+                     ), 
+            tabPanel(title = "Generalised blockmodeling",
+                     # 5. blockmodeling
+    
+                     #5.1 blockmodeling options ####
+                     # "BlckmdllngOpt"
+                     withTags({
+                       div(h4(b("Customise blockmodeling")))
+                     }),
+                     hr(),
+                     fluidRow(
+                       column(3,
+                              
+                              # 5.1.1 blockmodeling approach ####
+                              # "blckmdllngApproach"
+                              radioButtons(inputId = "blckmdllngApproach",
+                                           label = "Which approach should be used?",
+                                           choices = c("Binary blockmodeling"="bin",
+                                                       "Valued blockmodeling"="val",
+                                                       "Sum of squares homogeneity blockmodeling"="ss",
+                                                       "Absolute deviations homogeneity blockmodeling"="ad"),
+                                           inline = FALSE
+                              ),
+                              
+                              # 5.1.1 (A) M parameter for valued blockmodeling ####
+                              # "ParamM"
+                              conditionalPanel(
+                                condition ="input.blckmdllngApproach == 'val'",
+                                numericInput(inputId = "ParamM",
+                                             label = 'Select the M parameter for valued blockmodeling',
+                                             value = NULL,
+                                             min = 0,
+                                             step = 1
+                                )
+                                ),
+                              
+                              # 5.1.1 (B) Threshold parameter for binary blockmodeling ####
+                              # "ParamThreshold", "ThresholdSelected"
+                              conditionalPanel(
+                                condition ="input.blckmdllngApproach == 'bin'",
+                                # Asks whether the user wants to set a threshold
+                                checkboxInput(inputId = "ThresholdSelected",
+                                              label = 'Do you want to use a threshold for binary blockmodeling?',
+                                              value = F,
+                                              width = "100%"
+                                ),
+                              ),
+                                conditionalPanel(
+                                  condition ="input.ThresholdSelected== true",
+                                  numericInput(inputId = "ParamThreshold",
+                                             label = 'Select the threshold parameter for binary blockmodeling',
+                                             value = NULL,
+                                             min = 0,
+                                             step = 1)
+                                  
+                                ),
+                              
+                              
+                              # 5.1.2 Types of of allowed blocktypes ####
+                              # "blckmdllngBlockTypes"
+                              selectInput(inputId = "blckmdllngBlockTypes",
+                                          label = "Selecte the allowed blocktypes",
+                                          choices = c("null or empty block"="nul",
+                                                      "complete block"="com",
+                                                      # "row-dominant blocks (binary and valued approach only)"="rdo",
+                                                      # "column-dominant blocks (binary and valued approach only)"="cdo",
+                                                      "(f-)regular block"="reg",
+                                                      "row (f-)regular blocks"="rre",
+                                                      "column (f-)regular blocks"= "cre",
+                                                      # "row dominant blocks (binary, valued only)"="rfn",
+                                                      # "column dominant blocks (binary, valued only)"= "cfn",
+                                                      # "density block (binary approach only)"="den",
+                                                      # "average block (valued approach only)"="avg",
+                                                      "do not care block (the error is always zero)"="dnc"),
+                                          selected = c("nul","com"),
+                                          multiple = TRUE
+                              ),  
+                              
+                              # 5.1.3 Number of clusters ####
+                              # "blckmdllngNumClusters"
+                              numericInput(inputId = "blckmdllngNumClusters",
+                                           label = 'How many clusters to use in the generation of partitions?',
+                                           value = 3,
+                                           min = 1,
+                                           step = 1
+                              ),       
+                       ),
+                       column(4, offset = 1,
+                              
+                              # 5.1.4 Number of repetitions ####
+                              # "blckmdllngRepetitions"
+                              numericInput(inputId = "blckmdllngRepetitions",
+                                           label = 'How many repetitions/different starting partitions to check?',
+                                           value = 2,
+                                           min = 1,
+                                           step = 1
+                              ),
+                              
+                              # 5.1.5 Saving initial parameters ####
+                              withTags(i("Saving the additional parameters can take up more memory, but also preserve precious informationa")),
+                              # "blckmdllngInitialParams"
+                              checkboxInput(inputId = "blckmdllngInitialParams",
+                                            label = 'Should the initial parameters be saved?',
+                                            value = TRUE
+                              ),
+                              withTags(i("Disable for very complex calculation and/or low-end machines")),
+                              
+                              # 5.1.6 Deleting  matrices ####
+                              # "blckmdllngDelete"
+                              checkboxInput(inputId = "blckmdllngDelete",
+                                            label = 'Should the networks/matrices be deleted from the results to save space?',
+                                            value = TRUE
+                              ),
+                              
+                              # 5.1.7 Number of results to save ####
+                              # "blckmdllngMaxSavedResults"
+                              numericInput(inputId = "blckmdllngMaxSavedResults",
+                                           label = 'How many results to save?*',
+                                           value = 1,
+                                           min = 1,
+                                           step = 1
+                              ),
+                              withTags(i("* Should not be larger than the number of repetitions")),
+                              
+                              # 5.1.8 Returning  all ####
+                              # "blckmdllngAll"
+                              checkboxInput(inputId = "blckmdllngAll",
+                                            label = 'Should solution be shown for all partitions (not only the best one)?',
+                                            value = TRUE
+                              ),
+                              # 5.1.9 Returning  error data ####
+                              # "blckmdllngError"
+                              checkboxInput(inputId = "blckmdllngError",
+                                            label = 'Should the error for each optimized partition be returned?',
+                                            value = TRUE
+                              ),
+                              
+                              # 5.1.10 Random Seed ####
+                              # "blckmdllngRandomSeed"
+                              numericInput(inputId = "blckmdllngRandomSeed",
+                                           label = 'Insert a random seed to use it',
+                                           value = NULL,
+                                           min = 0,
+                                           step = 1
+                              ),
+                              
+                              # 5.1.11 Printing extra info ####
+                              # "blckmdllngPrintRep"
+                              checkboxInput(inputId = "blckmdllngPrintRep",
+                                            label = 'Should some information about each optimization be printed?',
+                                            value = TRUE
+                              ),
+                       ),
+                       column(4,
+                              # 5.1.12 Start blockmodeling ####
+                              withTags(
+                                h6(
+                                  b("Start blockmodeling"),
+                                ),
+                              ),
+                              # "blckmdllngRun"
+                              actionButton(inputId = "blckmdllngRun",
+                                           label = "Process data",
+                                           icon = icon(name = "calculator",
+                                                       lib = "font-awesome")
+                              ),
+                              
+                              withTags(
+                                h5(
+                                  b("Downloads"),
+                                ),
+                              ),
+                              # 5.1.13 Download vector partitions ####
+                              withTags(
+                                h6(
+                                  b("Download vector partitions"),
+                                ),
+                              ),
+                              # "DownloadClu"
+                              downloadButton(outputId = "DownloadClu",
+                                             label = "Download partitions as vector",
+                                             icon = icon(name = "download",
+                                                         lib = "font-awesome")
+                                             ),
+                              
+                              # 5.1.14 Download image matrix ####
+                              withTags(
+                                h6(
+                                  b("Download image matrix"),
+                                  ),
+                              ),
+                              
+                              # "DownloadIM"
+                              downloadButton(outputId = "DownloadIM",
+                                             label = "Download matrix image",
+                                             icon = icon(name = "table",
+                                                         lib = "font-awesome",)
+                              ),
+                              # "DropIM"
+                              checkboxInput(inputId = "dropIM",
+                                            label = 'Should dimensions that have only one element be dropped?',
+                                            value = TRUE
+                                            ),
+                              # "whichIM"
+                              conditionalPanel(
+                                condition = "input.blckmdllngAll==true",
+                                numericInput(inputId = "whichIM",
+                                             label = 'Which "best" partition should be printed?',
+                                             value = 1,
+                                             min = 1,
+                                             step = 1,
+                                             ),
+                                )
+                              ), # Column 4 
+                     ), # Col layout
+                     
+                     # 5.2 Show the blockmodeling's summary ####
+                     # "TableBlckmdllng", "SummaryBlckmdllng"
+                     withTags({
+                       div(h4(b("Summary of blockmodeling results")))
+                     }),
+                     tabsetPanel(
+                       tabPanel(title = "Table",
+                                tableOutput("TableBlckmdllng"),
+                                ),
+                       tabPanel(title = "Summary",
+                                verbatimTextOutput("SummaryBlckmdllng"),
+                                ),
+                       tabPanel(title = "Image matrix",
+                                tableOutput("TableIM")
+                                ),
+                     )
+                     
+            ), # Tab panel2
+          
+            # 6. Show the Adjacency Matrix ####
+            # "adjOptType","adj","adjPlot","adjPartPlot"
+            tabPanel(title = "Adjacency matrix",
+                     hr(),
+                     fluidRow(
+                       column(3,
+                              # 6.1 Select network ####
+                              withTags(i("Select matrix")),
+                              radioButtons(inputId = "adjSelector",
+                                           label = "Which matrix do you want to use?",
+                                           choiceNames = c("original","partitioned"),
+                                           choiceValues = c(1,2)
+                              ),
+                       ),
+                       conditionalPanel(
+                         # 6.2 Select type of output ####
+                         condition = "input.adjSelector == 1",
+                       column(4, offset = 1,
+                              # 6.2.1 Select type of output for the original partition ####
+                              withTags(i("Select output")),
+                              radioButtons(inputId = "adjOptType",
+                                           label = "In which form do you want to see the matrix?",
+                                           choiceNames = c("table","plot"),
+                                           choiceValues = c("t","p")
+                                           ),
+                              ),
+                       ),
+                       ),
+                     # 6.3 Table output original matrix ####
+                     tableOutput("adj"),
+                     # 6.4 Plot output original matrix ####
+                     plotOutput("adjPlot"),
+                     # 6.5 Plot output partitioned matrix ####
+                     plotOutput("adjPartPlot")
+                     ),
+            
+            tabPanel(title = "Network Plot",
+                     # 7 Various sys of network plots ####
+                     conditionalPanel(
+                       # 7.1 "Network" and "igraph" sys ####
+                       condition = "input.PlotSys != 3",
+                       plotOutput("NetworkPlot"),
+                      ),
+                     conditionalPanel(
+                       condition = "input.PlotSys == 3",
+                       # 7.2 "visNetwork" sys ####
+                       visNetworkOutput("igraphPlot"),
+                     ),
+                     
+                     #8. Plotting options####
+                     # "PlotOpt"
+                     withTags({
+                       div(h4(b("Plotting options")))
+                     }),
+ 
+                     hr(),
+                     fluidRow(
+                       # 8.1 Select matrix to plot ####
+                       # "PlotSelector"
+                       column(3,
+                              withTags(i("Select network")),
+                              radioButtons(inputId = "PlotSelector",
+                                           label = "Which matrix do you want to use?",
+                                           choiceNames = c("original","partitioned"),
+                                           choiceValues = c(1,2)
+                              ),
+                       ),
+                       # 8.2 Select plotting sys ####
+                       # "PlotSys"
+                       column(4, offset = 1,
+                              withTags(i("Select output")),
+                              radioButtons(inputId = "PlotSys",
+                                           label = "Which package to use for the plotting?",
+                                           choiceNames = c("network","igraph","visNetwork"),
+                                           choiceValues = c(1,2,3),
+                                           inline = TRUE,
+                                           selected = 2
+                              ),
+                         ),
+                     ),
+      
+                     # 8.3 Options for the "network" plotting sys ####
+                     conditionalPanel(
+                       condition = "input.PlotSys == 1",
+                       withTags({
+                         div(h4(b("network Plotting Options")))
+                       }),
+                    # Layout with mutiple coloumns
+                    hr(),
+                    fluidRow(
+                       column(3,
+                              withTags(h5(b("General options"))),
+                              # 8.3.1 Mode ####
+                              # "PlotMode"
+                              radioButtons(inputId = "PlotMode",
+                                           label = 'How to arrange the nodes?',
+                                           choiceNames = c("Fruchterman-Reingold algorithm","Circle"),
+                                           choiceValues = c("fruchtermanreingold","circle"),
+                                           inline = TRUE
+                                           ),
+                              
+                              # 8.3.2 Isolate ####
+                              # "PlotIsolate"
+                              checkboxInput(inputId = "PlotIsolate",
+                                            label = 'Should isolated nodes be displayed?',
+                                            value = TRUE
+                              ),
+                              
+                              # 8.3.3 Interactive ####
+                              # "PlotInteractive"
+                              # checkboxInput(inputId = "PlotInteractive",
+                              #               label = 'Should the plot be plot be interactive?*',
+                              #               value = FALSE
+                              # ),
+                              # withTags({
+                              #   div(b("(* Can be very slow!)"))
+                              # }),
+                       ),
+                       column(5,
+                              h4("Aesthetic options"),
+                              conditionalPanel(
+                                condition ="input.directionality == true",
+                                # 8.3.4 Arrows ####
+                                #8.3.4 (A) Whether to override arrows ####
+                                # "OverridePlotArrows"
+                                checkboxInput(inputId = "OverridePlotArrows",
+                                              label = 'Do you want to ovveride the default setting for displaying arrows?',
+                                              value = FALSE
+                                ),
+                                conditionalPanel(
+                                  condition ="input.OverridePlotArrows == true",
+                                # 8.3.4 (B) Overriding plot arrows
+                                # "PlotArrows"
+                                checkboxInput(inputId = "PlotArrows",
+                                              label = 'Should arrows be displayed?',
+                                              value = FALSE
+                                              ),
+                                ),
+                                  # 8.3.4 (C) Arrow size ####
+                                  # "PlotArrowSize"
+                                  sliderInput(inputId = "PlotArrowSize",
+                                              ticks = TRUE,
+                                              label = 'Dimension of plot\'s arrows',
+                                              value = 1,
+                                              min = .5,
+                                              max = 20,
+                                              step = .5
+                                              ),
+                                ),
+                              # 8.3.4 (B) Message "No directionality, No arrows" ####
+                              conditionalPanel(
+                                condition ="input.directionality == false",
+                                withTags( 
+                                  h5(
+                                    i(style="color:red;", "Arrows ",u("cannot")," be set"),
+                                    i("because they do not make sense for non-directional networks"),
+                                  )
+                                )
+                              ),
+                              # 8.3.5 Label size ####
+                              # "PlotLabelSize"
+                              sliderInput(inputId = "PlotLabelSize",
+                                          ticks = TRUE,
+                                          label = 'Dimension of plot\'s labels',
+                                          value = 1,
+                                          min = .5,
+                                          max = 20,
+                                          step = .5
+                              ),
+                              
+                              # 8.3.6 Nodes size ####
+                              # "PlotNodeSize"
+                              sliderInput(inputId = "PlotNodeSize",
+                                          ticks = TRUE,
+                                          label = 'Dimension of plot\'s nodes',
+                                          value = 5,
+                                          min = .5,
+                                          max = 10,
+                                          step = .5
+                                          ),
+                              )
+                       )
+                    ),# END Conditional panel1 : network Plotting Options"
+                    conditionalPanel(
+                      condition = "input.PlotSys == 2",
+                      # 8.4 Options for the "igraph" plotting sys ####
+                      withTags({
+                        h4(b("igraph Plotting Options"))
+                      }),
+                      
+                      # Layout with multiple coloumns
+                      hr(),
+                      fluidRow(
+                        column(3,
+                               withTags({
+                                 h4("Vertex")
+                               }),
+                               # 8.4.1 Size of the node ####
+                               # "PlotVertexSize"
+                               sliderInput(inputId = "PlotVertexSize",
+                                           ticks = TRUE,
+                                           label = 'Dimension of plot\'s nodes',
+                                           value = 5,
+                                           min = .5,
+                                           max = 20,
+                                           step = .5
+                                           ),
+                               conditionalPanel(
+                                 condition = "input.PlotSelector==1",
+                                 # 8.4.1 (A) Color of the node without partitions ####
+                                 # "PlotVertexColour"
+                                 textInput(inputId = "PlotVertexColour",
+                                           label = 'Color of the plot\'s nodes',
+                                           value = "SkyBlue2"
+                                 ),
+                               ),
+                               conditionalPanel(
+                                 condition = "input.PlotSelector==2",
+                                 # 8.4.1 (B) Color of the node with partitions ####
+                                 withTags({
+                                   i("With partitioned networks colours are directly assigned to each cluster")
+                                 }),
+                                 
+                                 # WIP | 8.4.1 (C) Color of the partitions ####
+                                 # "PlotPartitionsColour"
+                                 # selectInput(inputId = "PlotPartitionsColours",
+                                 #             label = "Colours of the nodes based on partitions",
+                                 #             choice = c("Random"=1),
+                                 #             selected = 1,
+                                 #             multiple = FALSE),
+                               ),
+                               
+                               # 8.4.2 Color of the node's frame ####
+                               # "PlotVertexFrameColour"
+                               textInput(inputId = "PlotVertexFrameColour",
+                                         label = 'Color of the nodes\' frame',
+                                         value = "black"
+                                         ),
+                               
+                               # 8.4.3 Shape of the nodes ####
+                               # "PlotVertexShape"
+                               radioButtons(inputId = "PlotVertexShape",
+                                            label = "Shape of the plot's nodes?",
+                                            choices = c("Circle"="circle",
+                                                        "Square"="square",
+                                                        "Rectangle"="rectangle",
+                                                        # "Circle and Square"="csquare",
+                                                        # "Circle and Rectangle"="crectangle",
+                                                        "Vertical Rectangle"="vrectangle",
+                                                        "Sphere"="sphere","None"="none"),
+                                            inline = TRUE
+                                            ),
+                               # 8.4.4 Font Family of the nodes' labels ####
+                               # "PlotVertexLabelFontFamily"
+                               radioButtons(inputId = "PlotVertexLabelFontFamily",
+                                            label = "Which font do you wish to use for the nodes' labels?",
+                                            choices = c("Serif"="serif","Sans serif"="sans"),
+                                            inline = TRUE
+                                            ),
+                               # 8.4.5 Size of the node's labels ####
+                               # "PlotVertexLabelSize"
+                               sliderInput(inputId = "PlotVertexLabelSize",
+                                           ticks = TRUE,
+                                           label = 'Dimension of node\'s labels',
+                                           value = 1,
+                                           min = .5,
+                                           max = 20,
+                                           step = .5
+                                           ),
+                               # 8.4.6 Size of the node's labels ####
+                               # "PlotVertexLabelDist"
+                               sliderInput(inputId = "PlotVertexLabelDist",
+                                           ticks = TRUE,
+                                           label = 'Labels\'  distance from the node',
+                                           value = 0.5,
+                                           min = .5,
+                                           max = 3,
+                                           step = .5
+                                           ),
+                               # 8.4.7 Colour of the node's labels ####
+                               # "PlotVertexLabelColour"
+                               textInput(inputId = "PlotVertexLabelColour",
+                                         label = 'Color of the  nodes\' labels',
+                                         value = "black"
+                                         ),
+                               ),
+                        column(4, offset = 1,
+                               h4("Edges"),
+                               conditionalPanel(
+                                 condition = "input.ValuedMatrix == true",
+                               
+                              # 8.4.8 Edges width (manual/valued) ####
+                               checkboxInput(inputId = "igraphPlotEdgeWidthValues",
+                                             label = 'Do you want to see the network\'s values represented by the edges\' width?*',
+                                             value = FALSE
+                               ),
+                               conditionalPanel(
+                                 condition = "input.igraphPlotEdgeWidthValues == true",
+                                 # 8.4.8 (A) Max width of the edges ####
+                                 # "PlotEdgeWidth"
+                                 sliderInput(inputId = "igraphPlotEdgeMaxWidth",
+                                             ticks = TRUE,
+                                             label = 'Max width of plot\'s edges',
+                                             value = 1,
+                                             min = .5,
+                                             max = 20,
+                                             step = .5),
+                               ),
+                               ),
+                               conditionalPanel(
+                                 condition = "input.igraphPlotEdgeWidthValues == false",
+                               # 8.4.8 (B) Width of the edge ####
+                               # "PlotEdgeWidth"
+                               sliderInput(inputId = "igraphPlotEdgeWidth",
+                                           ticks = TRUE,
+                                           label = 'Width of plot\'s edges',
+                                           value = .5,
+                                           min = .5,
+                                           max = 20,
+                                           step = .5),
+                               ),
+
+                               # 8.4.9 Colour of the edge ####
+                               # "PlotEdgeColour"
+                               textInput(inputId = "PlotEdgeColour",
+                                         label = 'Color of the plot\'s edges',
+                                         value = "darkgrey"
+                               ),
+                               conditionalPanel(
+                                 condition = "input.directionality == true",
+                                 # 8.4.10 Arrows ####
+                                 # 8.4.10 (A) Whether to override arrows ####
+                                 # "OverrideigraphPlotArrows"
+                                 checkboxInput(inputId = "OverrideigraphPlotArrows",
+                                               label = 'Do you want to ovveride the default setting for displaying arrows?',
+                                               value = FALSE
+                                 ),
+                                 conditionalPanel(
+                                   condition ="input.OverrideigraphPlotArrows == true",
+                                 # 8.4.10 (B) Setting overidden plot arrows
+                                 # "igraphPlotArrows"
+                                 checkboxInput(inputId = "igraphPlotArrow",
+                                               label = 'Should arrows be displayed?',
+                                               value = FALSE
+                                               ),
+                                 ),
+                                   # 8.4.10 (A) Size of the edge's arrows ####
+                                   # "igraphPlotArrowSize"
+                                   sliderInput(inputId = "igraphPlotArrowSize",
+                                               label = 'Size of the edge\'s arrows',
+                                               value = 1,
+                                               min = .5,
+                                               max = 20,
+                                               step = .5
+                                               ),
+                                   # 8.4.10 (B) Width of the edge's arrows
+                                   # "PlotArrowWidth"
+                                   # sliderInput(inputId = "PlotArrowWidth",
+                                   #           label = 'Size of the edge\'s width',
+                                   #           value = 1,
+                                   #           min = .5,
+                                   #           max = 20,
+                                   #           step = .5
+                                   #           ),
+                                 ),
+                               # 8.4.10 (B) Message "No directionality, No arrows" ####
+                               conditionalPanel(
+                                 condition ="input.directionality == false",
+                                 withTags( 
+                                   h5(
+                                     i(style="color:red;", "Arrows ",u("cannot")," be set"),
+                                     i("because they do not make sense for non-directional networks"),
+                                   )
+                                 )
+                               ),
+                               # 8.4.12 Font Family of the edges' labels ####
+                               # "PlotEdgeLabelFontFamily"
+                               radioButtons(inputId = "PlotEdgeLabelFontFamily",
+                                            label = "Which font do you wish to use for the edges' labels?",
+                                            choices = c("Serif"="serif","Sans serif"="sans"),
+                                            inline = TRUE
+                               ),
+                               # 8.4.13 Size of the edges's labels ####
+                               # "PlotEdgeLabelSize"
+                               # sliderInput(inputId = "PlotEdgeLabelSize",
+                               #             ticks = TRUE,
+                               #             label = 'Dimension of edge\'s labels',
+                               #             value = 1,
+                               #             min = .5,
+                               #             max = 20,
+                               #             step = .5
+                               # ),
+                               # 8.4.14 Distance of the edges's labels ####
+                               # "PlotEdgeLabelDist"
+                               # sliderInput(inputId = "PlotEdgeLabelDist",
+                               #             ticks = TRUE,
+                               #             label = 'Labels\' distance from edges',
+                               #             value = 0.5,
+                               #             min = .5,
+                               #             max = 3,
+                               #             step = .5
+                               # ),
+                               # 8.4.15 Color of the edges' labels ####
+                               # "PlotEdgeLabelColour"
+                               textInput(inputId = "PlotEdgeLabelColour",
+                                         label = 'Colot of the plot\'s edges',
+                                         value = "black"
+                               ),
+                        ),
+                        column(4,
+                               h4("Aesthetic option"),
+                               # 8.4.16 Curved ####
+                               # "PlotEdgeCurved"
+                               checkboxInput(inputId = "PlotEdgeCurved",
+                                             label = 'Should the edges be displayed as curved lines?',
+                                             value = FALSE
+                               ),      
+                        ),
+                      ),
+                    ),# END Conditional panel2
+                    conditionalPanel(
+                      condition = "input.PlotSys == 3",
+                      # 8.5 Options for the "visNetwork" plotting sys ####
+                      withTags({
+                        h4(b("visNetwork Plotting Options"))
+                      }),
+                      # Layout with mutiple coloumns
+                      hr(),
+                      fluidRow(
+                        column(3,
+                               withTags({
+                                 h4("Plotting options")
+                               }),
+                               # 8.5.1 Title of the plot ####
+                               # "visTitle"
+                               textInput(inputId = "visTitle",
+                                         label = 'Title of the plot',
+                                         value = NULL
+                               ),
+                               # 8.5.2 Subtitle of the plot ####
+                               # "visSubtitle"
+                               textInput(inputId = "visSubtitle",
+                                         label = 'Subtitle of the plot',
+                                         value = NULL
+                               ),
+                               # 8.5.3 Color background ####
+                               # "visBackground"
+                               textInput(inputId = "visBackground",
+                                         label = 'Color of the plot\'s background',
+                                         value = "papayawhip"
+                               ),
+                        ),
+                        column(4, offset = 1,
+                               h4("Hierarchy"),
+                               # 8.5.4 Hierarchy ####
+                               # "visHier"
+                               checkboxInput(inputId = "visHier",
+                                             label = 'Should the network be plotted as a hierarchy?',
+                                             value = FALSE
+                               ),
+                               conditionalPanel(
+                                 condition = "input.visHier == 1",
+                                 # 8.5.4 (A) Direction of the nodes ####
+                                 # "visHierDirection"
+                                 radioButtons(inputId = "visHierDirection",
+                                              label = "Direction of the plot's nodes",
+                                              choices = c("up-down"="UD", "down-up"="DU",
+                                                          "left-right"="LR", "right-left"="RL"),
+                                              inline = TRUE
+                                 ),
+                                 # 8.5.4 (B) Parent centralisation ####
+                                 # "visHierCentralisation"
+                                 checkboxInput(inputId = "visHierCentralisation",
+                                               label = 'Should the parent nodes be plotted centrally?',
+                                               value = FALSE
+                                 ),
+                               ),
+                        ),
+                      ),
+                      )# Conditional panel3
+                    ), # Tab panel4
+            )# Tabset panel
+
+          )# Main panel
+      ),# Sidebar
+  # 9. Footer with HTML/CSS #### 
+  withTags(
+    div(class="footer1",
+        div(class="footer3",
+            br(),
+            p("Realised for the University of Ljubljana - FDV"),
+            h6("v. 1.4.0"),
+        ), # footer3
+        div(class="footer2",
+            p(
+              a(
+                img(src="https://licensebuttons.net/l/by-nc-sa/3.0/88x31.png"),
+                href="https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode",
+                target="_blank"),
+              "Fabio Ashtar Telarico 2022 \u2001",
+              ),
+        )# footer2
+        
+    ) # footer1
+  ),
+    )# ui
+
+# §2 Output ####
+server <- function(input, output) {
+  
+  # 1. Reading data ####
+  # "aj"
+  ReadData<-eventReactive(input$aj,{
+    
+    # 1.1 Checks if the sample was chosen ####
+    if(input$Sample){
+      dat<-readRDS(file = "./Sample.rds")
+      MatrixType<-"adjacency"
+    } else {
+      
+      # 1.2 Options for text/plain files ####
+      if(input$type!=4){
+        
+        # 1.2.1 If the separator is 'other' ####
+        # "OtherSep"
+        if(input$OtherSep!="")input$sep<-input$OtherSep
+        
+        # 1.2.2 Notification "Reading list in progress" ####
+        showNotification(ui = "Reading data from uploaded list",
+                         type = "message", id = message,
+                         duration = NULL, closeButton = F)
+        on.exit(removeNotification(message),add = T)
+        
+        # 1.2.3 Determine type of file provided
+        if(input$type==1){
+          MatrixType<-"adjacency"
+          # For adj matrix, the row names should always be
+          # in the first column
+          ListRowNames<-1
+        } else {
+          ListRowNames<-NULL
+          if(input$type==2)MatrixType<-"edgelist"
+          if(input$type==3)MatrixType<-"incidence"
+        }
+        
+        # 1.2.4 Reads the data from file ####
+        # "List", "sep", "whites",
+        UploadedFile<-input$List
+        dat <- read.delim(file = UploadedFile$datapath,
+                          sep = input$sep,
+                          strip.white = input$whites,
+                          # row.names = 1,
+                          row.names = ListRowNames,
+                          header = input$ListHeader)
+        dat<-as.matrix(x = dat)
+        
+      } else {
+        # 1.3 Pajek input ####
+        # "PajekFile", "PajekInput"
+        MatrixType<-"adjacency"
+        UploadedFile<-input$PajekFile
+        
+        # 1.3.1 Reads the data from Pajek .net file ####
+        if(input$PajekInput=="PajekNetwork"){
+          dat <- loadnetwork(filename = UploadedFile$datapath,
+                             useSparseMatrix = F)
+        }
+        
+        # 1.3.2 Reads the data from Pajek .mat file ####
+        if(input$PajekInput=="PajekMatrix"){
+          loadmatrix(filename = UploadedFile$datapath)
+          dat <- loadmatrix(filename = UploadedFile$datapath)
+        }
+      }
+    }
+    
+    dat
+    })
+
+  # 2. Create network object ####
+  NW<-eventReactive(ReadData(),{
+    dat<-ReadData()
+    
+    # 2.1 Determine type of file provided
+    if(input$type== 1){
+      MatrixType<-"adjacency"
+      # For adj matrix, the row names should always be
+      # in the first column
+      ListRowNames<-1
+    } else {
+      ListRowNames<-NULL
+      if(input$type==2)MatrixType<-"edgelist"
+      if(input$type==3)MatrixType<-"incidence"
+      if(input$type==4)MatrixType<-"adjacency"
+    }
+    
+    # 2.2 Checks for valued networks ####
+    # "ValuedMatrix", "ValuesName"
+    if(input$ValuedMatrix){
+      IgnoreEval<-FALSE
+      ValuesName<-"weights"
+    } else {
+      IgnoreEval<-TRUE
+      ValuesName<-NULL
+    }
+    
+    # 2.3 Turn the matrix into a network ####
+    # "directionality","loops", "parallel"
+    dat <- network::network(x = dat,
+                            directed = input$directionality,
+                            loops = input$loops,
+                            # multiple = input$parallel,
+                            matrix.type = MatrixType,
+                            ignore.eval = IgnoreEval,
+                            names.eval = ValuesName)
+    
+    # 2.3.1 Notification "Multiplex matrix"
+    if(is.multiplex(dat)){
+      showNotification(ui = "The uploaded list contains a multiplex matrix. The matrix may need to be simplified by removing both loops and multiple edges.",
+                       type = "message",
+                       duration = NULL, closeButton = T)
+    }
+    
+    # 2.3.2 Notification "Bipartite matrix"
+    if(network::is.bipartite(dat)){
+      showNotification(ui = "The uploaded list contains a bipartite matrix. Bipartition will be ignored",
+                       type = "message",
+                       duration = NULL, closeButton = T)
+    }
+    
+    # 2.3.3 Notification "Reading file completed"
+    showNotification(ui = "Elaboration of uploaded file completed",
+                     type = "message",
+                     duration = 20, closeButton = T)
+    dat
+  })
+  
+  # 3. Get adjacency matrix ####
+  # Converts edge lists and incidence matrices in adjacency matrix
+  
+  GetAdjacenctMatrix<-eventReactive(ReadData(),{
+     
+    # Determine type of file provided
+    if(input$type==2||input$type==3){
+      
+      # 3.1 For edge lists and incidence matrices ####
+      if(input$type==2)MatrixType<-"edgelist"
+      if(input$type==3)MatrixType<-"incidence"
+      
+      # Reads the data as a network object
+      M<-NW()
+      
+      # Converts the network in an adjacency matrix
+      if(input$ValuedMatrix){
+        # 3.1.1 for valued networks ####
+        M<-as.matrix.network(x = dat,matrix.type = "adjacency",attrname = "weights")
+      } else {
+        # 3.1.2 for non-valued networks ####
+        M<-as.matrix.network(x = dat,matrix.type = "adjacency")
+      }
+    } else {
+      # 3.2 Otherwise, the data is already in the right format
+      M<-ReadData()
+    }
+    M
+  })
+  
+  # 4. Outputting summary text ####
+  # "summary", "IncludeAdj"
+  
+  output$summary <- renderPrint({
+    dat<-NW()
+    network::summary.network(dat,print.adj = input$IncludeAdj)
+    })
+  
+  # # Multiplex-network warnings
+  # output$AdjWarning<-renderText({
+  #   dat<-NW()
+  #   # igraph version
+  #   igraphDat <- intergraph::asIgraph(dat)
+  #   
+  #   # Manages multiplex networks
+  #   if(is.multiplex(dat)){
+  #     ###
+  #   }
+  #   })
+  
+  # 5. Plotting adjacency matrix ####
+  # "adjPlot", "adjOptType", "adjSelector"
+  
+  output$adjPlot<-renderPlot({
+    
+    # Checks if the user selected the original (= 1) or the
+    # partitioned (= 2) matrix
+    
+    if(input$adjSelector==2){
+      
+      # 5.1 Plotting the partitioned adjacency matrix ####
+      
+      # Loads blockmodeling's result
+      dat<-mdllng()
+      
+      # Plots the partitioned matrix
+      plot(dat,main="")
+    } else {
+      
+      # 5.2 Checks if the user selected "plot" or "table" for
+      # the original matrix
+      if(input$adjOptType=="t") return(NULL)
+      
+      # 5.3 Prints original adjacency matrix ####
+        
+        # Load the matrix
+        dat<-GetAdjacenctMatrix()
+        
+        # Plots the original matrix
+        plotMat(x = dat,ylab = NULL,xlab = NULL,plot.legend = T,
+                main = NULL,title.line = "")
+      }
+
+  })
+  
+  # 6. Outputting the adjacency table ####
+  # "adj"  
+  output$adj <- renderTable({
+    
+    # 6.1 Check what output was requested ####
+    if(input$adjOptType=="p") return(NULL)
+    if(input$adjSelector==2) return(NULL)
+      
+    # 6.2 Reads matrix ####
+    dat<-GetAdjacenctMatrix()
+    
+    # 6.3 Prints the matrix ####
+    dat
+    },rownames = TRUE) 
+
+  # 7. Non interactive plots ####
+  # "NetworkPlot", "PlotSys"
+  output$NetworkPlot<-renderPlot({
+    
+    # 7.1 Adds the partitions if needed
+    
+    if(input$PlotSelector==2){
+      # Reads data in
+      dat<-NW()
+      clu<-blockmodeling::clu(res=mdllng())
+      dat<-
+        network::set.vertex.attribute(x = dat,
+                                      attrname = "cluster",
+                                      value = clu)
+      } else {
+        dat<-NW()
+      }
+    
+    # Checks the plotting system
+    if(input$PlotSys==1){
+      
+      # 7.2 Plotting with network ####
+      
+      # 7.2.1 Checks setting for the arrows ####
+      if (input$OverridePlotArrows){
+        PlotArrows<-input$PlotArrows
+      } else {
+        PlotArrows<-input$directionality
+      }
+      
+      if(input$PlotSelector==2){
+        
+        # 7.2.2 With partitions ####
+        
+        network::plot.network(x = dat,
+                              usearrows = PlotArrows,
+                              mode = input$PlotMode,
+                              displayisolates = input$PlotIsolate,
+                              # interactive = PlotInteractive,
+                              arrowhead.cex = input$PlotArrowSize,
+                              label.cex = input$PlotLabelSize,
+                              vertex.cex = input$PlotNodeSize,
+                              vertex.col="cluster",
+                              label=network.vertex.names(dat)
+                              )
+      } else {
+        
+        # 7.2.3 Without partitions ####
+        network::plot.network(x = dat,
+                              usearrows = input$PlotArrows,
+                              mode = input$PlotMode,
+                              displayisolates = input$PlotIsolate,
+                              # interactive = PlotInteractive,
+                              arrowhead.cex = input$PlotArrowSize,
+                              label.cex = input$PlotLabelSize,
+                              vertex.cex = input$PlotNodeSize,
+                              label=network.vertex.names(dat)
+                              )
+        }
+      } else {
+      # 7.3 Plotting with igraph ####
+        
+      # Converts to igraph
+      dat2<- intergraph::asIgraph(dat)
+      if (input$PlotSys!=2) {
+          return(NULL)
+        } else {
+          
+          # 7.3.1 Edges width (manual/valued) ####
+          # Checks if the user wants the edges' width to
+          # represent the network's value
+          if(input$igraphPlotEdgeWidthValues==FALSE){
+            igraphPlotEdgeWidth <- input$igraphPlotEdgeWidth
+          } else {
+            temp <- igraph::get.edge.attribute(dat2)$weights
+            MaxTemp<- max(temp)
+            igraphPlotEdgeWidth <- input$igraphPlotEdgeMaxWidth/MaxTemp*temp
+          }
+
+          # 7.3.2 Setting arrows ####
+          if(input$OverrideigraphPlotArrows){
+            # 7.3.2 (A) Overriding arrows ####
+            if(input$igraphPlotArrow==FALSE) igraphPlotArrow <- 0
+            if(input$igraphPlotArrow==TRUE) igraphPlotArrow <- 2
+          } else {
+            # 7.3.2 (B) Default settings ####
+            if(input$directionality==FALSE) igraphPlotArrow <- 0
+            if(input$directionality==TRUE) igraphPlotArrow <- 2
+          }
+          
+          # 7.3.3 With partitions  ####
+          if(input$PlotSelector==2){
+            # Plots igraph with colours assigned to each partition
+            
+            NodesColours <- sample(colors()[c(30,10,80,60,140,256,454)],size = length(clu),replace = T)
+            V(dat2)$color <- NodesColours[V(dat2)$cluster]
+            
+            igraph::plot.igraph(x = dat2,
+                                vertex.label= igraph::get.vertex.attribute(dat2)$vertex.names,
+                                vertex.size = input$PlotVertexSize,
+                                vertex.frame.color = input$PlotVertexFrameColour,
+                                vertex.shape = input$PlotVertexShape,
+                                vertex.label.family = input$PlotVertexLabelFontFamily,
+                                vertex.label.cex = input$PlotVertexLabelSize,
+                                vertex.label.dist = input$PlotVertexLabelDist,
+                                vertex.label.color = input$PlotVertexLabelColour,
+                                edge.color = input$PlotEdgeColour,
+                                edge.width = igraphPlotEdgeWidth,
+                                edge.arrow.mode = igraphPlotArrow,
+                                edge.arrow.size = input$igraphPlotArrowSize,
+                                # arrow.width = input$PlotArrowWidth,
+                                edge.label.family = input$PlotEdgeLabelFontFamily,
+                                # edge.label.cex = input$PlotEdgeLabelSize,
+                                # edge.label.dist = input$PlotEdgeLabelDist,
+                                edge.label.color = input$PlotEdgeLabelColour,
+                                edge.curved = input$PlotEdgeCurved
+            )
+          } else {
+            
+            # 7.3.4 Without partitions  ####
+            # Plots igraph with manually selected colours
+            
+            igraph::plot.igraph(x = dat2,
+                                vertex.label= igraph::get.vertex.attribute(dat2)$vertex.names,
+                                vertex.size = input$PlotVertexSize,
+                                # vertex.color = input$PlotVertexColour,
+                                vertex.frame.color = input$PlotVertexFrameColour,
+                                vertex.shape = input$PlotVertexShape,
+                                vertex.label.family = input$PlotVertexLabelFontFamily,
+                                vertex.label.cex = input$PlotVertexLabelSize,
+                                vertex.label.dist = input$PlotVertexLabelDist,
+                                vertex.label.color = input$PlotVertexLabelColour,
+                                edge.color = input$PlotEdgeColour,
+                                edge.width = igraphPlotEdgeWidth,
+                                edge.arrow.mode = igraphPlotArrow,
+                                edge.arrow.size = input$igraphPlotArrowSize,
+                                # arrow.width = input$PlotArrowWidth,
+                                # edge.label = input$PlotEdgeLabel,
+                                edge.label.family = input$PlotEdgeLabelFontFamily,
+                                # edge.label.cex = input$PlotEdgeLabelSize,
+                                # edge.label.dist = input$PlotEdgeLabelDist,
+                                edge.label.color = input$PlotEdgeLabelColour,
+                                edge.curved = input$PlotEdgeCurved
+            )
+          }
+           
+          
+        } # else of if!=2
+      } # else of if==1
+    })
+  # 8. Plotting with VisNetwork
+  output$igraphPlot<-renderVisNetwork({
+    if(input$PlotSys==3){
+      
+      # Reads data in and adds the partitions if needed
+      if(input$PlotSelector==2){
+        dat<-NW()
+        clu<-clu(res=mdllng())
+        dat<-
+          network::set.vertex.attribute(x = dat,attrname = "cluster",
+                               value = clu)
+        
+      } else {
+        dat<-NW()
+      }
+      
+      # Converts to igraph
+      dat2<- intergraph::asIgraph(dat)
+      
+      # Sets colours according to partition (if applicable)
+      if(input$PlotSelector==2){
+        NodesColours <- sample(colors()[c(30,10,80,60,140,256,454)],size = length(clu),replace = T)
+        V(dat2)$color <- NodesColours[V(dat2)$cluster] 
+      }
+
+      # Converts to visNetwork
+      dat3<-toVisNetworkData(dat2)
+      
+      # adds correct labels
+      dat3$nodes$label<-dat3$nodes$vertex.names
+      
+      if(input$visHier){
+        
+        # 8.1 Hierarchical networks ####
+        # Checks preference for hierarchical networks and outputs
+        
+        visNetwork(nodes = dat3$nodes, edges = dat3$edges,
+                   main = input$visTitle,
+                   submain = input$visSubtitle,
+                   background=input$visBackground)%>%
+          visHierarchicalLayout(direction = input$visHierDirection,
+                                parentCentralization = input$visHierCentralisation)
+      } else {
+        
+        # 8.2 Non-hierarchical networks ####
+        
+        visNetwork(nodes = dat3$nodes, edges = dat3$edges,
+                   main = input$visTitle,
+                   submain = input$visSubtitle,
+                   background=input$visBackground)
+      }
+    }
+  })
+  
+  # 9. Outputting blockmodeling ####
+  # "blckmdllng"
+  
+  mdllng <- eventReactive(input$blckmdllngRun, {
+    
+    # Loads data 
+    M<-GetAdjacenctMatrix()
+    
+    # Checks if valued blockmodeling was chosen
+    # "paramM"
+    if(input$blckmdllngApproach=="val"){
+      
+      # 9.1 Executes blockmodeling of valued networks ####
+      optRandomParC(M = M,
+                    k = input$blckmdllngNumClusters,
+                    approaches = input$blckmdllngApproach,
+                    blocks = input$blckmdllngBlockTypes,
+                    rep = input$blckmdllngRepetitions,
+                    save.initial.param.opt = input$blckmdllngInitialParams,
+                    deleteMs = input$blckmdllngDelete,
+                    max.iden = input$blckmdllngMaxSavedResults,
+                    return.all = input$blckmdllngAll,
+                    return.err = input$blckmdllngError,
+                    RandomSeed = input$blckmdllngRandomSeed,
+                    printRep = input$blckmdllngPrintRep,
+                    usePreSpecM = input$ParamM,
+                    )
+    } else if (input$ThresholdSelected==TRUE&&input$blckmdllngApproach=="bin"){
+      
+      # 9.2 Binary  blockmodeling with threshold ####
+      optRandomParC(M = M,
+                    k = input$blckmdllngNumClusters,
+                    approaches = input$blckmdllngApproach,
+                    blocks = input$blckmdllngBlockTypes,
+                    rep = input$blckmdllngRepetitions,
+                    save.initial.param.opt = input$blckmdllngInitialParams,
+                    deleteMs = input$blckmdllngDelete,
+                    max.iden = input$blckmdllngMaxSavedResults,
+                    return.all = input$blckmdllngAll,
+                    return.err = input$blckmdllngError,
+                    RandomSeed = input$blckmdllngRandomSeed,
+                    printRep = input$blckmdllngPrintRep,
+                    usePreSpecM = input$ParamThreshold,
+                    )
+    } else {
+      # 9.3 Generalised blockmodeling ####  
+      # (Not valued and binary without threshold)
+      optRandomParC(M = M,
+                    k = input$blckmdllngNumClusters,
+                    approaches = input$blckmdllngApproach,
+                    blocks = input$blckmdllngBlockTypes,
+                    rep = input$blckmdllngRepetitions,
+                    save.initial.param.opt = input$blckmdllngInitialParams,
+                    deleteMs = input$blckmdllngDelete,
+                    max.iden = input$blckmdllngMaxSavedResults,
+                    return.all = input$blckmdllngAll,
+                    return.err = input$blckmdllngError,
+                    RandomSeed = input$blckmdllngRandomSeed,
+                    printRep = input$blckmdllngPrintRep,
+      )
+    }
+    
+    })
+  
+  # 10. Outputs blockmodeling ####
+  
+  # 10.1 Blockmodeling output in a table ####
+  TableBlockmdllng<-eventReactive(mdllng(),{
+    ValueFromName<-
+      function(Var.Name,collapse=F,sep=","){
+        x<-eval(parse(text = Var.Name))
+        if(collapse){
+          paste(x,collapse = sep)
+        }
+      }
+    blck<-reactiveValues()
+    
+    blck<-mdllng()
+    
+    tbl<-reactiveValues()
+    
+    tbl<-matrix(data="",byrow = F,ncol=6,
+                nrow = input$blckmdllngRepetitions)
+    
+    colnames(tbl)<-c("Network size","Approaches","Blocks","Clusters row","Clusters columns","Error")
+    
+    tbl[1,1]<-nrow(blck$initial.param$M)
+    tbl[1,2]<-paste(blck$initial.param$approaches,collapse = ",")
+    tbl[1,3]<-paste(blck$initial.param$blocks,collapse = ",")
+    tbl[2:nrow(tbl),1:3]<-""
+    
+    Var.Name<-reactiveValues()
+    
+    for(i in 1:nrow(tbl)){
+      Var.Name<-paste0("blck$best$best",i,"$resC$nUnitsRowClu")
+      tbl[i,4]<-ValueFromName(Var.Name = Var.Name,collapse = T)
+      Var.Name<-paste0("blck$best$best",i,"$resC$nUnitsColClu")
+      tbl[i,5]<-ValueFromName(Var.Name = Var.Name,collapse = T)
+      Var.Name<-paste0("blck$best$best",i,"$err")
+      tbl[i,6]<-ValueFromName(Var.Name = Var.Name,collapse = T)
+    }
+    tbl
+  })
+  
+  # 10.2 Renders blockmodeling output in a table ####
+
+  output$TableBlckmdllng<- renderTable({
+    TableBlockmdllng()
+  },colnames = T,rownames = F,striped = F,hover = T,bordered = T,
+  spacing = "s",width = "auto",align = "c",digits = 0,quoted = F)
+  
+  # 10.3 Renders blockmodeling output as summary ####
+  output$SummaryBlckmdllng <- renderPrint({
+    mdllng()
+  })
+  
+  # 10.4 Image matrix (IM) ####
+  # 10.4.1 Disassembles image matrix as tables ####
+  IM<-eventReactive(mdllng(),{
+    Disassemble.Array<-
+      function(array){
+          
+          for(i in 1:dim(array)[3]){
+            list[[i]]<-array[,,i]
+          }
+
+      }
+    
+    list<-reactiveValues()
+    list<-list()
+    
+    for(i in 1:length(mdllng()$best)){
+      list[[i]]<-
+        blockmodeling::IM(res = mdllng(),
+                          drop = input$dropIM,
+                          which = i)
+    }
+    
+    matrix<-list[[1]]
+    
+    if(length(list)>1){
+      for(i in 2:length(list)){
+        matrix<-rbind(matrix,
+                      list[[i]]
+        )
+      }
+      rownames(matrix)<-
+        paste0(
+          rep(paste0("Solution ",1:length(list)),each=nrow(list[[1]])),
+          paste0(" Row ", 1:nrow(list[[1]]))
+        )
+      colnames(matrix)<-1:ncol(matrix)
+    } else {
+      colnames(matrix)<-1:ncol(matrix)
+    }
+    
+    return(matrix)
+  })
+  
+  # 10.4.2 Renders image matrix as tables ####
+  output$TableIM<- renderTable({
+    
+    IM()
+  },colnames = T,rownames = T,striped = T,hover = T,bordered = T,
+  spacing = "s",width = "auto",align = "c",digits = 0,quoted = F)
+  
+  # 11. Download clusters to file ####
+  output$DownloadClu <- downloadHandler(
+    filename = "partitions.clu",
+    content = function(file) {
+      blockmodeling::savevector(v = clu(res = mdllng()),
+                                filename = file)
+      }
+    )
+  
+  # 12. Download image matrix ####
+  # dropIM, whichIM
+  output$DownloadIM <- downloadHandler(
+    filename = "image.txt",
+    content = function(file) {
+      IM<-blockmodeling::IM(res = mdllng(),
+                        drop = input$dropIM,
+                        which = input$whichIM
+                        )
+      write.table(x = IM,file = file,append = F,quote = F)
+      }
+    )
+  }
+
+# Run the application 
+shinyApp(ui = ui, server = server)
