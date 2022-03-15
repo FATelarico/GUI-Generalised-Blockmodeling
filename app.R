@@ -6,6 +6,7 @@ if(!require(blockmodeling)) install.packages("blockmodeling")
 if(!require(igraph)) install.packages("igraph")
 if(!require(visNetwork))install.packages("visNetwork")
 if(!require(intergraph))install.packages("intergraph")
+if(!require(DT))install.packages("DT")
 
 library(shiny)
 library(htmlwidgets)
@@ -15,6 +16,7 @@ library(intergraph)
 library(igraph)
 library(network)
 library(visNetwork)
+library(DT)
 
 # §1 Inputs ####
 ui <- fluidPage(
@@ -82,7 +84,7 @@ ui <- fluidPage(
                                 ## 1.2 Select type of input ####
                                 ## "type"
                                 selectInput(inputId = "type",
-                                            label = "What type of data do you want to upload?",
+                                            label = "Type of data?",
                                             choice = c("Adjacency Matrix*"=1,"Edges list"=2, "Incidence matrix"=3,"Pajek"=4),
                                             selected = 1,
                                             multiple = FALSE
@@ -101,7 +103,7 @@ ui <- fluidPage(
                                   ### 1.2.2 Headers edge list file ####
                                   ### "ListHeader"
                                   checkboxInput(inputId = "ListHeader",
-                                                label = 'Does the file have headers?',
+                                                label = 'Headers?',
                                                 value = T,
                                                 ),
                                   )
@@ -116,7 +118,7 @@ ui <- fluidPage(
                               ## 2.1 Separator ####
                               ## "sep"
                               radioButtons(inputId = "sep",
-                                           label = "What separator did you use?",
+                                           label = "Separator",
                                            choiceNames = c("tab","comma","semicolon","other"),
                                            choiceValues = c("\t",",",";","Other")
                               ),
@@ -133,14 +135,14 @@ ui <- fluidPage(
                               ## 2.2 Trim blanks ####
                               ## "whites"
                               checkboxInput(inputId = "whites",
-                                            label = 'Should extra blanks be trimmed?',
+                                            label = 'Trim extra blanks',
                                             value = TRUE),
                               conditionalPanel(
                                 condition = "input.type == 4",
                                 ## 2.3 Type of Pajek file ####
                                 ## "PajekInput"
                                 radioButtons(inputId = "PajekInput",
-                                             label = "What type of Pajek file do you want to upload?",
+                                             label = "Type of Pajek file",
                                              selected = ".net",
                                              choiceNames = c(".mat",".net"),
                                              choiceValues = c("PajekMatrix","PajekNetwork")
@@ -166,7 +168,7 @@ ui <- fluidPage(
                             ## 3.1 Values/Weights ####
                             ## "ValuedMatrix"
                             checkboxInput(inputId = "ValuedMatrix",
-                                          label = 'Do the network\'s edges carry a value/weight?',
+                                          label = 'Valued/Weighted network',
                                           value = TRUE,
                             ),
                             ### 3.1.1 Values/Weights name ####
@@ -185,13 +187,13 @@ ui <- fluidPage(
                             ### 3.2 Direction ####
                             # "directionality"
                             checkboxInput(inputId = "directionality",
-                                          label = 'Do the network\'s edges have direction?',
+                                          label = 'Directional edges',
                                           value = TRUE,
                             ),
                             ### 3.3 Self-links ####
                             # "loops"
                             checkboxInput(inputId = "loops",
-                                          label = 'Are self-links allowed?',
+                                          label = 'Self-links',
                                           value = TRUE,
                             ),
                             ### DISABLED # 3.4 Multiple ####
@@ -221,7 +223,7 @@ ui <- fluidPage(
                      
                      # "IncludeAdj"
                      checkboxInput(inputId = "IncludeAdj",
-                                   label = 'Should the summary include the edgelist matrix?',
+                                   label = 'Include the edgelist matrix?',
                                    value = F,
                                    width = "100%"
                      ),
@@ -242,11 +244,11 @@ ui <- fluidPage(
                                   ### 5.1.1 blockmodeling approach ####
                                   ### "blckmdlngApproach"
                                   selectInput(inputId = "blckmdlngApproach",
-                                              label = "Which approach should be used?",
-                                              choices = c("Binary blockmodeling"="bin",
-                                                           "Valued blockmodeling"="val",
-                                                           "Sum of squares homogeneity blockmodeling"="ss",
-                                                           "Absolute deviations homogeneity blockmodeling"="ad"),
+                                              label = "Approach?",
+                                              choices = c("Binary"="bin",
+                                                           "Valued"="val",
+                                                           "Sum of squares homogeneity"="ss",
+                                                           "Absolute deviations homogeneity"="ad"),
                                               multiple=FALSE
                                   ),
                                   
@@ -255,7 +257,7 @@ ui <- fluidPage(
                                   conditionalPanel(
                                     condition ="input.blckmdlngApproach == 'val'",
                                     numericInput(inputId = "ParamM",
-                                                 label = 'Select the M parameter for valued blockmodeling',
+                                                 label = 'Select the M parameter',
                                                  value = NULL,
                                                  min = 0,
                                                  step = 1
@@ -268,7 +270,7 @@ ui <- fluidPage(
                                     condition ="input.blckmdlngApproach == 'bin'",
                                     # Asks whether the user wants to set a threshold
                                     checkboxInput(inputId = "ThresholdSelected",
-                                                  label = 'Do you want to use a threshold for binary blockmodeling?',
+                                                  label = 'Use a threshold',
                                                   value = F,
                                                   width = "100%"
                                     ),
@@ -276,7 +278,7 @@ ui <- fluidPage(
                                   conditionalPanel(
                                     condition ="input.ThresholdSelected == true && input.blckmdlngApproach == 'bin'",
                                     numericInput(inputId = "ParamThreshold",
-                                                 label = 'Select the threshold parameter for binary blockmodeling',
+                                                 label = 'Threshold parameter',
                                                  value = NULL,
                                                  min = 0,
                                                  step = 1)
@@ -298,16 +300,16 @@ ui <- fluidPage(
                                   conditionalPanel(
                                     condition = 'input.blckmdlngPrespecifiedYN == false',
                                     selectInput(inputId = "blckmdlngBlockTypes",
-                                                label = "Select the allowed blocktypes",
+                                                label = "Allowed blocktypes",
                                                 choices = c("null or empty block"="nul",
                                                             "complete block"="com",
-                                                            # "row-dominant blocks (binary and valued approach only)"="rdo",
-                                                            # "column-dominant blocks (binary and valued approach only)"="cdo",
+                                                            # "row-dominant (binary and valued approach only)"="rdo",
+                                                            # "column-dominant (binary and valued approach only)"="cdo",
                                                             "(f-)regular block"="reg",
-                                                            "row (f-)regular blocks"="rre",
-                                                            "column (f-)regular blocks"= "cre",
-                                                            # "row dominant blocks (binary, valued only)"="rfn",
-                                                            # "column dominant blocks (binary, valued only)"= "cfn",
+                                                            "row (f-)regular"="rre",
+                                                            "column (f-)regular"= "cre",
+                                                            # "row dominant (binary, valued only)"="rfn",
+                                                            # "column dominant (binary, valued only)"= "cfn",
                                                             # "density block (binary approach only)"="den",
                                                             # "average block (valued approach only)"="avg",
                                                             "do not care block (the error is always zero)"="dnc"),
@@ -341,23 +343,24 @@ ui <- fluidPage(
                                                 ),
                                   ),
                            column(6,
-                                  withTags(i("Disable for very complex calculation and/or low-end machines")),
+                                  
                                   ### 5.1.6 Number of results to save ####
                                   ### "blckmdlngMaxSavedResults"
                                   numericInput(inputId = "blckmdlngMaxSavedResults",
-                                               label = 'How many results to save?*',
+                                               label = 'How many results to save?',
                                                value = 10,
                                                min = 1,
                                                step = 10
                                   ),
-                                  withTags(i("* Should not be larger than the number of repetitions")),
+                                  
                                   
                                   ### 5.1.7 Returning  all ####
                                   ### "blckmdlngAll"
                                   checkboxInput(inputId = "blckmdlngAll",
-                                                label = 'Should solution be shown for all partitions (not only the best one)?',
+                                                label = 'Should solution be shown for all partitions (not only the best one)?*',
                                                 value = TRUE
                                   ),
+                                  withTags(i("Disable for very complex calculation and/or low-end machines")),
                                   
                                   ### 5.1.8 Random Seed ####
                                   ### "blckmdlngRandomSeed"
@@ -401,122 +404,82 @@ ui <- fluidPage(
                                condition = 'input.blckmdlngPrespecifiedYN == true',
                                sidebarPanel(
                                  width = 12,
-                                 checkboxInput(inputId = "ManualPrespecified",
-                                               label = 'Pre-specify custom blockmodeling parameters manually?',
-                                               value = TRUE
-                                               ),
+                                 # checkboxInput(inputId = "ManualPrespecified",
+                                 #               label = 'Pre-specify custom blockmodeling parameters manually?',
+                                 #               value = TRUE
+                                 #               ),
                                  
                                    fluidRow(
-                                     tableOutput(outputId = 'PreSpecifiedBlocktypesHOT'),
+                                     # tableOutput(outputId = 'CustomBlockModel'),
+                                     DT::dataTableOutput(outputId = 'CustomBlockModel',width = '100%'),
                                    ), # fluidrow
                                    
                                    #### 5.1.12(A) Hot table and inputs ####
-                                 conditionalPanel(
-                                   condition = 'input.ManualPrespecified == true',
+                                 # conditionalPanel(
+                                 #   condition = 'input.ManualPrespecified == true',
                                    hr(),
                                    fluidRow(
                                      column(width = 6,
                                             ##### Clusters' size ####
-                                            ##### 'CustoomBlockModel_ClusterSize'
-                                            numericInput(inputId = "CustoomBlockModel_ClusterSize",
-                                                         label = 'Clusters\' size',
+                                            ##### 'CustoomBlockModel_NumberCluster'
+                                            numericInput(inputId = "CustoomBlockModel_NumberCluster",
+                                                         label = 'Number of cluster',
                                                          value = 3,
-                                                         min = 1,
+                                                         min = 2,
                                                          step = 1),
-                                            actionButton(inputId = 'SetSizeHOT',
+                                            actionButton(inputId = 'SetSizeDT',
                                                          label = 'Confirm',
                                                          icon = icon(name = "window-maximize",
                                                                      lib = "font-awesome")
                                             ),
+          
+                                     ), # column
+                                     column(width = 6,
                                             ##### Block types ####
-                                            ##### 'TowardsHOT'
-                                            selectInput(inputId = "TowardsHOT",
+                                            ##### 'TowardsDT'
+                                            selectInput(inputId = "TowardsDT",
                                                         label = "Select the allowed blocktypes",
-                                                        choices = c("null or empty block"="nul",
-                                                                    "complete block"="com",
-                                                                    # "row-dominant blocks (binary and valued approach only)"="rdo",
-                                                                    # "column-dominant blocks (binary and valued approach only)"="cdo",
-                                                                    "(f-)regular block"="reg",
-                                                                    "row (f-)regular blocks"="rre",
-                                                                    "column (f-)regular blocks"= "cre",
-                                                                    # "row dominant blocks (binary, valued only)"="rfn",
-                                                                    # "column dominant blocks (binary, valued only)"= "cfn",
-                                                                    # "density block (binary approach only)"="den",
-                                                                    # "average block (valued approach only)"="avg",
-                                                                    "do not care block (the error is always zero)"="dnc"),
+                                                        choices = c("null or empty"="nul",
+                                                                    "complete"="com",
+                                                                    # "row-dominant (binary and valued approach only)"="rdo",
+                                                                    # "column-dominant (binary and valued approach only)"="cdo",
+                                                                    "(f-)regular"="reg",
+                                                                    "row (f-)regular"="rre",
+                                                                    "column (f-)regular"= "cre",
+                                                                    # "row dominant (binary, valued only)"="rfn",
+                                                                    # "column dominant (binary, valued only)"= "cfn",
+                                                                    # "density (binary approach only)"="den",
+                                                                    # "average (valued approach only)"="avg",
+                                                                    "do not care (the error is always zero)"="dnc"),
                                                         selected = c("nul","com"),
                                                         multiple = TRUE
                                             ),
-                                     ), # column
-                                     column(width = 6,
-                                            ##### How to select cells ####
-                                            ##### 'CellsToFill'
-                                            radioButtons(inputId = 'ContiguousMultipleSingle',
-                                                         label = 'How to select cells?',
-                                                         choiceNames = c('Contiguous areas','Multiple cells','Single cell'),
-                                                         choiceValues = c('C','M','S'),
-                                                         selected = 'C',
-                                                         inline = T
-                                                         ),
-                                            conditionalPanel(
-                                              ##### Single selection
-                                              condition = 'input.ContiguousMultipleSingle=="S"',
-                                              textAreaInput(inputId = "CellsToFill_S",
-                                                            label = 'Which cell to fill?',
-                                                            value = '1,2',
-                                                            width = '100%'
-                                              ),
-                                              withTags(i('Row:Column')),
-                                            ),
-                                            conditionalPanel(
-                                              ##### Multiple selection
-                                              condition = 'input.ContiguousMultipleSingle=="M"',
-                                              textAreaInput(inputId = "CellsToFill_M",
-                                                            label = 'Which cells to fill?',
-                                                            value = '1,2;2,2',
-                                                            width = '100%'
-                                                            ),
-                                              withTags(i('FirstRow,FirstColumn;SecondRow,SecondColumn;...')),
-                                            ),
-                                            conditionalPanel(
-                                              ##### Multiple selection
-                                              condition = 'input.ContiguousMultipleSingle=="C"',
-                                              textAreaInput(inputId = "CellsToFill_C",
-                                                            label = 'Which cells to fill?',
-                                                            value = '1:2,2:3',
-                                                            width = '100%'
-                                                            ),
-                                              withTags(i('"FirstRow:LastRow,FirstCol:LastCol"')),
-                                            ),
- 
-                                            
-                                            hr(),
-                                            actionButton(inputId = "LoadBlocksIntoHOT",
+                                            actionButton(inputId = "LoadBlocksIntoDT",
                                                          label = "Load blocks",
                                                          icon = icon(name = "clone",
                                                                      lib = "font-awesome")
                                             ),
-                                     ),# End of column with input commands table
+                                     ),# End of column with inputs
                                    ), # End of fluid row
-                                   ), # End of Conditional panel 
+                                   #ManualPrespecified ), # End of Conditional panel 
                                  
                                  hr(),
                                  
                                  #### 5.1.12(C) File upload for pre-specified block-types' array
                                  fluidRow(
                                    column(width = 6,
-                                          ###### Use a sample ####
-                                          ###### "Sample" 
-                                          checkboxInput(inputId = "SampleArray",
-                                                        label = 'Use a sample',
-                                                        value = F),
+                                          # ###### Use a sample ####
+                                          # ###### "Sample" 
+                                          # checkboxInput(inputId = "SampleArray",
+                                          #               label = 'Use a sample',
+                                          #               value = F),
                                           
-                                          conditionalPanel(
-                                            condition = 'input.SampleArray == false',
+                                          # conditionalPanel(
+                                          #   condition = 'input.SampleArray == false',
                                             ###### Type of uploaded array ####
                                             # "ArrayInput"
                                             radioButtons(inputId = "ArrayInput",
-                                                         label = "What type of file do you want to upload?",
+                                                         label = "Type of file to upload?",
                                                          selected = ".RDS",
                                                          choiceValues = c(".RDS",".RData"),
                                                          choiceNames = c("R Data Serialized","R Data"),
@@ -546,14 +509,7 @@ ui <- fluidPage(
                                                         accept = c(".RData")
                                                         ),
                                               ), # Conditional panel RData
-                                            ), # Conditional panel Sample
-                                          conditionalPanel(
-                                            condition = 'input.EditUploadedArray== true',
-                                            checkboxInput(inputId = 'NoSample_NoFile',
-                                                          label = 'Ignore uploaded files/sample?',
-                                                          value = F
-                                                          ),
-                                          ),
+                                            # ), # Conditional panel SampleArray
                                           ), #Column
                                    column(width = 6,
                                           withTags(i("An array with four dimensions. The first is as long as the maximum number of allowed block types for a given block. The second dimension is the number of relations. The third and the fourth represent rows' and columns' clusters. For more information see", a(href="https://cran.r-project.org/web/packages/blockmodeling/blockmodeling.pdf#page=10",'here',target="_blank"))),
@@ -564,7 +520,7 @@ ui <- fluidPage(
                                                                    lib = 'font-awesome')
                                                       ),
                                           checkboxInput(inputId = 'EditUploadedArray',
-                                                        label = 'Do you want to edit the uploaded array?',
+                                                        label = 'Ignore the uploaded array',
                                                          value = F
                                                         ),
                                           withTags(h5('Only turn on',i('after'),'loading a block model from file')),
@@ -629,7 +585,7 @@ ui <- fluidPage(
                                     ),
                                   # "DropIM"
                                   checkboxInput(inputId = "dropIM",
-                                                label = 'Should dimensions that have only one element be dropped?',
+                                                label = 'Drop one-element dimensions',
                                                 value = TRUE
                                   ),
                            ) # Col 4
@@ -677,7 +633,7 @@ ui <- fluidPage(
                               ### 6.2.1 Select type of output for the original partition ####
                               withTags(i("Select output")),
                               radioButtons(inputId = "adjOptType",
-                                           label = "In which form do you want to see the matrix?",
+                                           label = "Type of visualisation",
                                            choiceNames = c("table","plot"),
                                            choiceValues = c("t","p")
                                            ),
@@ -718,7 +674,7 @@ ui <- fluidPage(
                        column(3,
                               withTags(i("Select network")),
                               radioButtons(inputId = "PlotSelector",
-                                           label = "Which matrix do you want to use?",
+                                           label = "Which matrix to use?",
                                            choiceNames = c("original","partitioned"),
                                            choiceValues = c(1,2)
                               ),
@@ -728,7 +684,7 @@ ui <- fluidPage(
                        column(4, offset = 1,
                               withTags(i("Select output")),
                               radioButtons(inputId = "PlotSys",
-                                           label = "Which package to use for the plotting?",
+                                           label = "Which package to use for plotting?",
                                            choiceNames = c("network","igraph","visNetwork"),
                                            choiceValues = c(1,2,3),
                                            inline = TRUE,
@@ -751,7 +707,7 @@ ui <- fluidPage(
                               ## 8.3.1 Mode ####
                               ## "PlotMode"
                               radioButtons(inputId = "PlotMode",
-                                           label = 'How to arrange the nodes?',
+                                           label = 'Nodes arrangement',
                                            choiceNames = c("Fruchterman-Reingold algorithm","Circle"),
                                            choiceValues = c("fruchtermanreingold","circle"),
                                            inline = TRUE
@@ -760,7 +716,7 @@ ui <- fluidPage(
                               ### 8.3.2 Isolate ####
                               ### "PlotIsolate"
                               checkboxInput(inputId = "PlotIsolate",
-                                            label = 'Should isolated nodes be displayed?',
+                                            label = 'Isolated nodes',
                                             value = TRUE
                               ),
                               
@@ -782,7 +738,7 @@ ui <- fluidPage(
                                 #### 8.3.4 (A) Whether to override arrows ####
                                 # "OverridePlotArrows"
                                 checkboxInput(inputId = "OverridePlotArrows",
-                                              label = 'Do you want to ovveride the default setting for displaying arrows?',
+                                              label = 'Ovveride default arrow settings?',
                                               value = FALSE
                                 ),
                                 conditionalPanel(
@@ -790,7 +746,7 @@ ui <- fluidPage(
                                 #### 8.3.4 (B) Overriding plot arrows
                                 #### "PlotArrows"
                                 checkboxInput(inputId = "PlotArrows",
-                                              label = 'Should arrows be displayed?',
+                                              label = 'Display arrows',
                                               value = FALSE
                                               ),
                                 ),
@@ -911,7 +867,7 @@ ui <- fluidPage(
                                ### 8.4.4 Font Family of the nodes' labels ####
                                ### "PlotVertexLabelFontFamily"
                                radioButtons(inputId = "PlotVertexLabelFontFamily",
-                                            label = "Which font do you wish to use for the nodes' labels?",
+                                            label = "Node labels' font",
                                             choices = c("Serif"="serif","Sans serif"="sans"),
                                             inline = TRUE
                                             ),
@@ -929,7 +885,7 @@ ui <- fluidPage(
                                ### "PlotVertexLabelDist"
                                sliderInput(inputId = "PlotVertexLabelDist",
                                            ticks = TRUE,
-                                           label = 'Labels\'  distance from the node',
+                                           label = 'Labels\' distance from the node',
                                            value = 0.5,
                                            min = .5,
                                            max = 3,
@@ -949,7 +905,7 @@ ui <- fluidPage(
                                
                               ### 8.4.8 Edges width (manual/valued) ####
                                checkboxInput(inputId = "igraphPlotEdgeWidthValues",
-                                             label = 'Do you want to see the network\'s values represented by the edges\' width?*',
+                                             label = 'Edges\' width shows the network\'s values*',
                                              value = FALSE
                                ),
                                conditionalPanel(
@@ -990,7 +946,7 @@ ui <- fluidPage(
                                  #### 8.4.10 (A) Whether to override arrows ####
                                  #### "OverrideigraphPlotArrows"
                                  checkboxInput(inputId = "OverrideigraphPlotArrows",
-                                               label = 'Do you want to ovveride the default setting for displaying arrows?',
+                                               label = 'Ovveriding defaultarrow settings?',
                                                value = FALSE
                                  ),
                                  conditionalPanel(
@@ -998,7 +954,7 @@ ui <- fluidPage(
                                  #### 8.4.10 (B) Setting overidden plot arrows
                                  #### "igraphPlotArrows"
                                  checkboxInput(inputId = "igraphPlotArrow",
-                                               label = 'Should arrows be displayed?',
+                                               label = 'Display arrows',
                                                value = FALSE
                                                ),
                                  ),
@@ -1034,7 +990,7 @@ ui <- fluidPage(
                                ### 8.4.12 Font Family of the edges' labels ####
                                ### "PlotEdgeLabelFontFamily"
                                radioButtons(inputId = "PlotEdgeLabelFontFamily",
-                                            label = "Which font do you wish to use for the edges' labels?",
+                                            label = "Edge labels' font",
                                             choices = c("Serif"="serif","Sans serif"="sans"),
                                             inline = TRUE
                                ),
@@ -1070,7 +1026,7 @@ ui <- fluidPage(
                                ### 8.4.16 Curved ####
                                ### "PlotEdgeCurved"
                                checkboxInput(inputId = "PlotEdgeCurved",
-                                             label = 'Should the edges be displayed as curved lines?',
+                                             label = 'Curved edges',
                                              value = FALSE
                                ),      
                         ),
@@ -1113,7 +1069,7 @@ ui <- fluidPage(
                                ### 8.5.4 Hierarchy ####
                                ### "visHier"
                                checkboxInput(inputId = "visHier",
-                                             label = 'Should the network be plotted as a hierarchy?',
+                                             label = 'Hierarchical network',
                                              value = FALSE
                                ),
                                conditionalPanel(
@@ -1121,7 +1077,7 @@ ui <- fluidPage(
                                  #### 8.5.4 (A) Direction of the nodes ####
                                  #### "visHierDirection"
                                  radioButtons(inputId = "visHierDirection",
-                                              label = "Direction of the plot's nodes",
+                                              label = "Direction",
                                               choices = c("up-down"="UD", "down-up"="DU",
                                                           "left-right"="LR", "right-left"="RL"),
                                               inline = TRUE
@@ -1129,7 +1085,7 @@ ui <- fluidPage(
                                  #### 8.5.4 (B) Parent centralisation ####
                                  #### "visHierCentralisation"
                                  checkboxInput(inputId = "visHierCentralisation",
-                                               label = 'Should the parent nodes be plotted centrally?',
+                                               label = 'Centralise parent nodes',
                                                value = FALSE
                                  ),
                                ),
@@ -1145,7 +1101,7 @@ ui <- fluidPage(
         div(class="footer3",
             br(),
             p("Realised for the University of Ljubljana - FDV"),
-            h6("v. 1.7.0 - ",
+            h6("v. 1.7.2 - ",
                i("The Block"),
                ),
         ), # footer3
@@ -1165,7 +1121,7 @@ ui <- fluidPage(
 
 # §2 Output ####
 server <- function(input, output) {
-  Tbl<-reactiveValues(Current = NULL)
+  Tbl<-reactiveValues(Current = NULL,Rows=NULL,Cols=NULL)
   
   # 1. Reading data ####
   # "aj"
@@ -1276,20 +1232,20 @@ server <- function(input, output) {
     if(is.multiplex(dat)){
       showNotification(ui = "The uploaded list contains a multiplex matrix. The matrix may need to be simplified by removing both loops and multiple edges.",
                        type = "message",
-                       duration = NULL, closeButton = T)
+                       duration = 5, closeButton = T)
     }
     
     ### 2.3.2 Notification "Bipartite matrix"
     if(network::is.bipartite(dat)){
       showNotification(ui = "The uploaded list contains a bipartite matrix. Bipartition will be ignored",
                        type = "message",
-                       duration = NULL, closeButton = T)
+                       duration = 5, closeButton = T)
     }
     
     ### 2.3.3 Notification "Reading file completed"
     showNotification(ui = "Elaboration of uploaded file completed",
                      type = "message",
-                     duration = 20, closeButton = T)
+                     duration = 10, closeButton = T)
     dat
   })
   
@@ -1596,22 +1552,26 @@ server <- function(input, output) {
     }
     
     ## 9.4 Checks customised blockmodeling ####
-    if(input$blckmdlngPrespecifiedYN){
-      if(input$SampleArray&!input$NoSample_NoFile){
-        ### 9.4.1 Sample bloc model ####
-        BlockTypes<-readRDS(file = "./Pre-specified_block-model.RDS")
-      } else {
-        ### Sample not selected
+    if(input$blckmdlngPrespecifiedYN|input$EditUploadedArray){
+        ### Use DT block-model
         condition<-magrittr::and(is.null(input$PrespecifiedArrayRDS),
                                  is.null(input$PrespecifiedArrayRData))
-        condition<-magrittr::and(condition,input$ManualPrespecified)
-        if(condition|input$NoSample_NoFile){
-          ### 9.4.2 Table bloc-model ####
+        if(condition&input$EditUploadedArray){
+          showNotification(ui = 'Ignoring the uploaded array was activated, but no array had been uploaded. Please, correct!',
+                           duration = 10)
+        }
+        
+        # condition<-magrittr::and(condition,input$ManualPrespecified)
+        condition<-magrittr::or(condition,
+                                input$EditUploadedArray)
+        
+        if(condition){
+          ### 9.4.2 Table block-model ####
           
           #### Notification "Reading the manually imputed, custom block-model" 
           showNotification(ui = "Reading the manually imputed, custom block-model",
                            type = "message",
-                           duration = NULL, closeButton = T)
+                           duration = 10, closeButton = T)
           
           #### Loads table from reactive
           df<-Tbl$Current
@@ -1667,7 +1627,7 @@ server <- function(input, output) {
             ### Notification "Reading the custom block-model from RDS" 
             showNotification(ui = "Reading the custom block-model from RDS",
                              type = "message",
-                             duration = NULL, closeButton = T)
+                             duration = 10, closeButton = T)
             
             # Reading RDS file
             UploadedFile<-input$PrespecifiedArrayRDS
@@ -1679,7 +1639,7 @@ server <- function(input, output) {
             ### Notification "Reading the custom block-model from RData" 
             showNotification(ui = "Reading the custom block-model from RData",
                              type = "message",
-                             duration = NULL, closeButton = T)
+                             duration = 10, closeButton = T)
             
             # Reading RData file
             UploadedFile<-input$PrespecifiedArrayRData
@@ -1687,8 +1647,7 @@ server <- function(input, output) {
             ImportedArray<-load(file = UploadedFile$datapath)
             BlockTypes<-eval(parse(text = ImportedArray))
             } # else if RData
-          } # else if HOT
-        } # else if Sample
+          } # else if DT
       NumClusters<-dim(BlockTypes)[length(dim(BlockTypes))]
       } else {
             BlockTypes<-input$blckmdlngBlockTypes
@@ -1701,7 +1660,7 @@ server <- function(input, output) {
     # Notification "Executing blockmodeling" 
     showNotification(ui = "Executing blockmodeling",
                      type = "message",
-                     duration = NULL, closeButton = T)
+                     duration = 10, closeButton = T)
     
     # Executes blockmodeling
     blck<-
@@ -1725,7 +1684,7 @@ server <- function(input, output) {
     # Notification "Blockmodeling completed" 
     showNotification(ui = "Blockmodeling completed",
                      type = "message",
-                     duration = NULL, closeButton = T)
+                     duration = 2, closeButton = T)
     
     blck
     })
@@ -1853,148 +1812,138 @@ server <- function(input, output) {
       }
     )
   
-  # 13. Visualise block-model from file/sample ####
-  UploadArrayFileSample<-
-    eventReactive(input$UploadArray,{
-      if(input$SampleArray){
-        ## 13.1 Loading Sample ####
-        Layers<-readRDS(file = "./Pre-specified_block-model.RDS")
-      } else if(input$ArrayInput==".RDS"){
-        ## 13.2 Reading RDS file ####
-        UploadedFile<-input$PrespecifiedArrayRDS
-        Layers<-readRDS(file = UploadedFile$datapath)
-      } else if(input$ArrayInput==".RData"){
-        ## 13.3 Reading RData file ####
-        UploadedFile<-input$PrespecifiedArrayRData
-        load(file = UploadedFile$datapath)
-        ImportedArray<-load(file = UploadedFile$datapath)
-        Layers<-eval(parse(text = ImportedArray))
-      }
-      
-      ## 13.4 Unmaking array ####
-      
-      ## Preparing data frame
-      UnmakingArray<-as.data.frame(matrix(NA,nrow = dim(Layers)[4],ncol = dim(Layers)[3]))
-      colnames(UnmakingArray)<-1:ncol(UnmakingArray)
-      
-      # ... then by column,...
-      for(i in 1:nrow(UnmakingArray)){
-        # ... and finally by row
-        for(j in 1:ncol(UnmakingArray)){
-          # if the specific cell contains less block types than the max
-          # the cell, the extra layers are filled with NAs
-          UnmakingArray[i,j]<-paste(unlist(strsplit(Layers[,1,i,j],split = ",")),collapse = ",")
+  # 13. Block-model from file/sample ####
+    observeEvent(input$UploadArray,{
+      ## Prepares condition
+      conditionArray<-
+        magrittr::or(!is.null(input$PrespecifiedArrayRDS),
+                     !is.null(input$PrespecifiedArrayRData))
+      ## Checks condition
+      if(conditionArray&!input$EditUploadedArray){
+        if(input$ArrayInput==".RDS"){
+          ## 13.1 Reading RDS file ####
+          UploadedFile<-input$PrespecifiedArrayRDS
+          Layers<-readRDS(file = UploadedFile$datapath)
+        } else if(input$ArrayInput==".RData"){
+          ## 13.2 Reading RData file ####
+          UploadedFile<-input$PrespecifiedArrayRData
+          load(file = UploadedFile$datapath)
+          ImportedArray<-load(file = UploadedFile$datapath)
+          Layers<-eval(parse(text = ImportedArray))
         }
+        
+        ## 13.3 Unmaking array ####
+        
+        ## Preparing data frame
+        UnmakingArray<-matrix(NA,nrow = dim(Layers)[4],ncol = dim(Layers)[3])
+        colnames(UnmakingArray)<-1:ncol(UnmakingArray)
+        
+        # Filling  by column ...
+        for(i in 1:nrow(UnmakingArray)){
+          # ... then by row
+          for(j in 1:ncol(UnmakingArray)){
+            # if the specific cell contains less block types than the max
+            # the cell, the extra layers are filled with NAs
+            UnmakingArray[i,j]<-paste(unlist(strsplit(Layers[,1,i,j],split = ",")),collapse = ",")
+          }
+        }
+        Tbl$Current<<-UnmakingArray
       }
-      Tbl$Current<-UnmakingArray
-      UnmakingArray
     })
   
-  # 14. Read block types from user input ####
-  ReadBlockTypes<-
-    eventReactive(c(input$SetSizeHOT,input$LoadBlocksIntoHOT,input$UploadArray),{
-      
-      conditionArray<-magrittr::and(!is.null(input$PrespecifiedArrayRDS),
-                                    !is.null(input$PrespecifiedArrayRData))
-      conditionArray<-magrittr::or(conditionArray,
-                                    input$SampleArray)
-      if(conditionArray&!input$EditUploadedArray){
-        TblCurrent<-UploadArrayFileSample()
-        Tbl$Current<-TblCurrent
-        return(Tbl$Current)
+  # 14. Cells' selection ####
+  observeEvent(input$CustomBlockModel_cell_clicked,{
+    Tbl$Rows<<-c(Tbl$Rows,input$CustomBlockModel_cell_clicked$row)
+    Tbl$Cols<<-c(Tbl$Cols,input$CustomBlockModel_cell_clicked$col)
+    
+    ## 14.1 Checks for de-selection ####
+    if(length(Tbl$Rows!=1)){
+      pairs<-rep(0,length(Tbl$Rows))
+      for(i in 1:length(pairs)){
+        pairs[i]<-paste(Tbl$Rows[i],Tbl$Cols[i],sep = '_')
+        ### Comment
+          # Uses text with separator to avoid confusing combinations like:
+          # Row 1, cell 22 and Row 12, cell 2
+          # as a single number both are '122' and could be deleted
+          # as text they are different: '1_22' and and '12_2'
       }
-      
-      ## 13.1 Initialise TblCurrent ####
-      if(is.null(Tbl$Current)){
-        ### If first run, empty
-        TblCurrent<-matrix(NA,nrow = input$CustoomBlockModel_ClusterSize,
-          ncol = input$CustoomBlockModel_ClusterSize)
+      hit<-which(
+        grepl(pattern = pairs[length(pairs)],
+              x = pairs[-length(pairs)])
+        )
+      if(length(hit)>0){
+        hit<-c(hit,length(pairs))
+        Tbl$Rows<-Tbl$Rows[-hit]
+        Tbl$Cols<-Tbl$Cols[-hit]
+      }
+    }
+  })
+  
+  # 15.  (Re)Initialise TblCurrent if empty ####
+    observeEvent(c(input$LoadBlocksIntoDT,input$UploadArray,input$SetSizeDT),{
+      TblCurrent<<-Tbl$Current
+      if(is.null(TblCurrent)){
+        TblCurrent<-matrix(NA,nrow = input$CustoomBlockModel_NumberCluster,
+                           ncol = input$CustoomBlockModel_NumberCluster)
         colnames(TblCurrent)<-1:ncol(TblCurrent)
-        TblCurrent<-as.data.frame(TblCurrent)
-        Tbl$Current<-TblCurrent
-      } else {
-        ### Else read from reactive
-        TblCurrent<-Tbl$Current
+        rownames(TblCurrent)<-NULL
+        Tbl$Current<<-TblCurrent
       }
-      
-      ## 13.2 Change number of columns and rows ####
-      if(ncol(TblCurrent)!=input$CustoomBlockModel_ClusterSize){
-        if(ncol(TblCurrent)<input$CustoomBlockModel_ClusterSize){
+    })
+  
+  # 16. Change block-model size ####
+  observeEvent(input$SetSizeDT,{
+      if(ncol(TblCurrent)!=input$CustoomBlockModel_NumberCluster){
+        if(ncol(TblCurrent)<input$CustoomBlockModel_NumberCluster){
           ### Add columns and rows
-          AddCols<-input$CustoomBlockModel_ClusterSize-ncol(TblCurrent)
-          for(i in 1:AddCols){
-            TblCurrent[,ncol(TblCurrent)+i]<-rep(NA)
-            TblCurrent[ncol(TblCurrent)+i,]<-rep(NA)
+          AddCols<-input$CustoomBlockModel_NumberCluster-ncol(TblCurrent)
+          
+          EmptyData<-rep(NA,nrow(TblCurrent))
+          for(i in 1:AddCols){  
+            TblCurrent<-cbind(TblCurrent,EmptyData)
           }
-        } else if(ncol(TblCurrent)>input$CustoomBlockModel_ClusterSize){
+          
+          EmptyData<-rep(NA,ncol(TblCurrent))
+          for(i in 1:AddCols){  
+            TblCurrent<-rbind(TblCurrent,EmptyData)
+          }
+        } else if(ncol(TblCurrent)>input$CustoomBlockModel_NumberCluster){
           ### Remove columns and rows
-          DelCols<-input$CustoomBlockModel_ClusterSize:ncol(TblCurrent)
+          DelCols<-(input$CustoomBlockModel_NumberCluster+1):ncol(TblCurrent)
           TblCurrent<-TblCurrent[-DelCols,-DelCols]
         }
         colnames(TblCurrent)<-1:ncol(TblCurrent)
-        Tbl$Current<-TblCurrent
+        rownames(TblCurrent)<-NULL
+        Tbl$Current<<-TblCurrent
       }
-      
-
-      ## 13.3 Find input ####
-      Cols<-Rows<-NULL
-      if(is.null(input$CellsToFill_S)&is.null(input$CellsToFill_M)&is.null(input$CellsToFill_C)){
-        # Select all table if the user leaves all fields empty
-        Rows<-1:nrow(TblCurrent)
-        Cols<-1:ncol(TblCurrent)
-      } else if (input$ContiguousMultipleSingle=='S'){
-        ### 13.3.1 Single cell selection ####
-        cells<-input$CellsToFill_S
-        cells<-unlist(strsplit(x = cells,split = ",",fixed = T))
-        Rows<-as.numeric(cells[1])
-        Cols<-as.numeric(cells[2])
-      } else if (input$ContiguousMultipleSingle=='M'){
-        #### 13.3.2 Multiple cell selection ####
-        cells<-input$CellsToFill_M
-        cells<-unlist(strsplit(x = cells,split = ";",fixed = T))
-        cells<-unlist(strsplit(x = cells,split = ",",fixed = T))
-        if(length(cells)>2){
-          for(i in seq(1,length(cells),2)){
-            cells[i]<-as.numeric(cells[i])
-            Rows<-c(Rows,cells[i])
-          }
-          for(i in seq(2,length(cells),2)){
-            cells[i]<-as.numeric(cells[i])
-            Cols<-c(Cols,cells[i])
-          }
-        } else {
-          Rows<-as.numeric(cells[1])
-          Cols<-as.numeric(cells[2])
-        }
-      } else {
-        ### 13.3.3 Contiguous cell selection ####
-        cells<-input$CellsToFill_C
-        cells<-unlist(strsplit(x = cells,split = ",",fixed = T))
-        cells<-as.numeric(unlist(strsplit(x = cells,split = ":",fixed = T)))
-        Rows<-cells[1]:cells[2]
-        Cols<-cells[3]:cells[4]
-      }
-
-      ## 13.4 Loading imputed data into table ####
-      NewCells<-paste(input$TowardsHOT,collapse = ",")
-      TblCurrent[Rows,Cols]<-NewCells
-      Tbl$Current<-TblCurrent
-      
-      Tbl$Current
     })
   
+  # 17. Loading imputed data into table ####
+  observeEvent(input$LoadBlocksIntoDT,{
+      HitRows<<-Tbl$Rows; HitCols<<-Tbl$Cols
+      if(!is.null(Tbl$Rows)){
+        for(i in 1:length(HitRows)){
+          TblCurrent[HitRows[i],HitCols[i]]<-paste(input$TowardsDT,collapse = ",")
+          Tbl$Rows<<-NULL
+          Tbl$Cols<<-NULL
+        }
+        colnames(TblCurrent)<-1:ncol(TblCurrent)
+        rownames(TblCurrent)<-NULL
+        Tbl$Current<<-TblCurrent
+      }
+    })
   
-  # 14. Visualise table ####
-  output$PreSpecifiedBlocktypesHOT<-
-    # renderRHandsontable({
-    renderTable({
-      
-      TblCurrent<-ReadBlockTypes()
-      
+  # 18. Visualise table ####
+  output$CustomBlockModel<-
+    DT::renderDataTable({
+      ## Read from reactive
+      TblCurrent<<-Tbl$Current
+      ## Converts to data frame in order to show row numbers
+      TblCurrent<-as.data.frame(TblCurrent)
+      ## Outputs
       TblCurrent
-    },striped = T,hover = T,bordered = T,rownames = T,colnames = T,digits = 0)
-  
-
+    },selection = list(mode="multiple",target='cell'),
+    options = list(paging =FALSE, searching=FALSE),style='bootstrap4')
   }
 
 # Run the application 
