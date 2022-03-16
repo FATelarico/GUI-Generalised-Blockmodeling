@@ -1,5 +1,7 @@
 # GUI-Generalised-Blockmodeling
 
+![image](https://user-images.githubusercontent.com/100512813/158572361-844a64ee-5784-4c82-a164-bf9bdcc917c0.png)
+
 This repository contains a GUI built in R Shiny to help users access specific functionalities of the R language for statistical computing and some of its packages for blockmodeling and, secondarily, network analysis. The app focuses mainly on the packages ``blockmodeling`` by Aleš Žiberna and
 ``network`` by Carter Butts.
 
