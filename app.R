@@ -21,7 +21,6 @@ library(DT)
 # §1 Inputs ####
 ui <- fluidPage(
   includeCSS("./style.css"), # CSS Styles
-  shinyjs::useShinyjs(),
   theme = shinytheme("united"),
   tags$head(
     tags$link(
@@ -409,10 +408,29 @@ ui <- fluidPage(
                                  #               value = TRUE
                                  #               ),
                                  
-                                   fluidRow(
+                                   
                                      # tableOutput(outputId = 'CustomBlockModel'),
                                      DT::dataTableOutput(outputId = 'CustomBlockModel',width = '100%'),
-                                   ), # fluidrow
+                                     fluidRow(
+                                       column(width = 3,
+                                              hr(),
+                                              ),
+                                       column(width = 4,
+                                              actionButton(inputId = 'ResetSelectionDT',
+                                                           label = 'Reset selection',
+                                                           icon = icon(name = 'recycle',
+                                                                       lib = "font-awesome")),
+                                              ),
+                                       column(width = 3,
+                                              actionButton(inputId = 'SelectAllDT',
+                                                           label = 'Select all',
+                                                           icon = icon(name = 'check',
+                                                                       lib = "font-awesome")),
+                                              ),
+                                       column(width = 2,
+                                              hr(),
+                                              ),
+                                                  ), # fluidrow
                                    
                                    #### 5.1.12(A) Hot table and inputs ####
                                  # conditionalPanel(
@@ -1101,7 +1119,7 @@ ui <- fluidPage(
         div(class="footer3",
             br(),
             p("Realised for the University of Ljubljana - FDV"),
-            h6("v. 1.7.2 - ",
+            h6("v. 1.7.3 - ",
                i("The Block"),
                ),
         ), # footer3
@@ -1120,7 +1138,7 @@ ui <- fluidPage(
     )# ui
 
 # §2 Output ####
-server <- function(input, output) {
+server <- function(input, output, session) {
   Tbl<-reactiveValues(Current = NULL,Rows=NULL,Cols=NULL)
   
   # 1. Reading data ####
@@ -1879,7 +1897,25 @@ server <- function(input, output) {
     }
   })
   
-  # 15.  (Re)Initialise TblCurrent if empty ####
+  # 15. Reset and select All ####
+  proxy=dataTableProxy(outputId = 'CustomBlockModel')
+  
+  ## 15.1 Reset ####
+  observeEvent(input$ResetSelectionDT,{
+    reloadData(proxy = proxy,Tbl$Current,clearSelection = 'all')
+    Tbl$Cols<<-Tbl$Rows<<-NULL
+  })
+  
+  # 15.2 Select all ####
+  observeEvent(input$SelectAllDT,{
+    selectAll<-matrix(NA,ncol = 2,nrow = nrow(Tbl$Current)*ncol(Tbl$Current))
+    Tbl$Rows<<-selectAll[,1]<-rep(1:nrow(Tbl$Current),each=ncol(Tbl$Current))
+    Tbl$Cols<<-selectAll[,2]<-rep(1:ncol(Tbl$Current),nrow(Tbl$Current))
+    
+    selectCells(proxy = proxy,selected = selectAll)
+  })
+  
+  # 16.  (Re)Initialise TblCurrent if empty ####
     observeEvent(c(input$LoadBlocksIntoDT,input$UploadArray,input$SetSizeDT),{
       TblCurrent<<-Tbl$Current
       if(is.null(TblCurrent)){
@@ -1888,10 +1924,12 @@ server <- function(input, output) {
         colnames(TblCurrent)<-1:ncol(TblCurrent)
         rownames(TblCurrent)<-NULL
         Tbl$Current<<-TblCurrent
+      } else {
+        Tbl$Current<<-TblCurrent
       }
     })
   
-  # 16. Change block-model size ####
+  # 17. Change block-model size ####
   observeEvent(input$SetSizeDT,{
       if(ncol(TblCurrent)!=input$CustoomBlockModel_NumberCluster){
         if(ncol(TblCurrent)<input$CustoomBlockModel_NumberCluster){
@@ -1918,7 +1956,7 @@ server <- function(input, output) {
       }
     })
   
-  # 17. Loading imputed data into table ####
+  # 18. Loading imputed data into table ####
   observeEvent(input$LoadBlocksIntoDT,{
       HitRows<<-Tbl$Rows; HitCols<<-Tbl$Cols
       if(!is.null(Tbl$Rows)){
@@ -1932,8 +1970,9 @@ server <- function(input, output) {
         Tbl$Current<<-TblCurrent
       }
     })
+
   
-  # 18. Visualise table ####
+  # 19. Visualise table ####
   output$CustomBlockModel<-
     DT::renderDataTable({
       ## Read from reactive
@@ -1943,8 +1982,9 @@ server <- function(input, output) {
       ## Outputs
       TblCurrent
     },selection = list(mode="multiple",target='cell'),
-    options = list(paging =FALSE, searching=FALSE,ordering=FALSE),style='bootstrap4')
-  }
+    options = list(paging =FALSE, searching=FALSE),style='bootstrap4')
+  
+}
 
 # Run the application 
 shinyApp(ui = ui, server = server)
