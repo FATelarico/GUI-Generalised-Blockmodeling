@@ -1982,7 +1982,7 @@ server <- function(input, output, session) {
       ## Outputs
       TblCurrent
     },selection = list(mode="multiple",target='cell'),
-    options = list(paging =FALSE, searching=FALSE),style='bootstrap4')
+    options = list(paging =FALSE, searching=FALSE,ordering=FALSE),style='bootstrap4')
   
 }
 
