@@ -15,3 +15,6 @@ The app supports different types of inputs:
 |Incidence matrix  |plain/text |.txt; .csv; .tab |``read.delim()``  |``base``           |
 |Pajek matrix      |Pajek      |.mat             |``loadmatrix()``  |``blockmodelling`` |
 |Pajek network     |Pajek      |.net             |``loadmatrix()``  |``blockmodelling`` |
+
+![image](https://user-images.githubusercontent.com/100512813/159125221-be31c181-a0bb-4399-b410-16f45cb9cfc9.png)
+Image source: https://doi.org/10.1038/s41598-017-15753-3
