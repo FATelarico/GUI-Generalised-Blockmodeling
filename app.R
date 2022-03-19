@@ -1184,14 +1184,25 @@ server <- function(input, output, session) {
   ReadData<-eventReactive(input$aj,{
     ## 1.1 Preloaded data 
     if(input$blckmdlngRDS){
+      
       ### 1.1.1 From block model results
       dat<-mdllng()$initial.param$M
       MatrixType<-"adjacency"
+      
+      #### Blockmodeling was run beforehand
+      Blck$RunAlready<<-TRUE
+      
     } else if(input$Sample){
       ### 1.1.2 From sample
       dat<-readRDS(file = "./Sample.rds")
       MatrixType<-"adjacency"
+      
+      #### Blockmodeling wasn't run yet
+      Blck$RunAlready<<-FALSE
     } else {
+      
+      #### Blockmodeling wasn't run yet
+      Blck$RunAlready<<-FALSE
       
       ## 1.2 Options for text/plain files ####
       if(input$type!=4){
@@ -1787,6 +1798,9 @@ server <- function(input, output, session) {
       
       ## Modal spinner, remove
       remove_modal_spinner()
+      
+      ## Remember that the blockmodel was run
+      Blck$RunAlready<<-TRUE
       
       # Notification "Blockmodeling completed"
       showNotification(ui = "Blockmodeling completed",
