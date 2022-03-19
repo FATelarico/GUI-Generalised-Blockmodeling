@@ -698,9 +698,9 @@ ui <- fluidPage(
                      ## 6.3 Table output original matrix ####
                      tableOutput("adj"),
                      ## 6.4 Plot output original matrix ####
-                     plotOutput("adjPlot"),
+                     plotOutput(outputId = "adjPlot"),
                      ## 6.5 Plot output partitioned matrix ####
-                     plotOutput("adjPartPlot")
+                     plotOutput(outputId = "adjPartPlot"),
                      ),
             
             tabPanel(title = "Network Plot",
@@ -708,12 +708,14 @@ ui <- fluidPage(
                      conditionalPanel(
                        ## 7.1 "Network" and "igraph" sys ####
                        condition = "input.PlotSys != 3",
-                       plotOutput("NetworkPlot"),
+                       plotOutput("NetworkPlot",
+                                  height = 640,width = 800),
                       ),
                      conditionalPanel(
                        condition = "input.PlotSys == 3",
                        ## 7.2 "visNetwork" sys ####
-                       visNetworkOutput("igraphPlot"),
+                       visNetworkOutput("igraphPlot",
+                                        height = 640,width = 800),
                      ),
                      
                      # 8. Plotting options####
@@ -874,31 +876,6 @@ ui <- fluidPage(
                                            max = 20,
                                            step = .5
                                            ),
-                               conditionalPanel(
-                                 condition = "input.PlotSelector==1",
-                                 #### 8.4.1 (A) Color of the node without partitions ####
-                                 #### "PlotVertexColour"
-                                 textInput(inputId = "PlotVertexColour",
-                                           label = 'Color of the plot\'s nodes',
-                                           value = "SkyBlue2"
-                                 ),
-                               ),
-                               conditionalPanel(
-                                 condition = "input.PlotSelector==2",
-                                 #### 8.4.1 (B) Color of the node with partitions ####
-                                 withTags({
-                                   i("With partitioned networks colours are directly assigned to each cluster")
-                                 }),
-                                 
-                                 #### WIP | 8.4.1 (C) Color of the partitions ####
-                                 #### "PlotPartitionsColour"
-                                 # selectInput(inputId = "PlotPartitionsColours",
-                                 #             label = "Colours of the nodes based on partitions",
-                                 #             choice = c("Random"=1),
-                                 #             selected = 1,
-                                 #             multiple = FALSE),
-                               ),
-                               
                                ### 8.4.2 Color of the node's frame ####
                                ### "PlotVertexFrameColour"
                                textInput(inputId = "PlotVertexFrameColour",
@@ -1083,7 +1060,51 @@ ui <- fluidPage(
                                checkboxInput(inputId = "PlotEdgeCurved",
                                              label = 'Curved edges',
                                              value = FALSE
-                               ),      
+                               ), 
+                               conditionalPanel(
+                                 condition = "input.PlotSelector==1",
+                                 #### 8.4.1 (A) Color of the node without partitions ####
+                                 #### "PlotVertexColour"
+                                 textInput(inputId = "PlotVertexColour",
+                                           label = 'Color of the plot\'s nodes',
+                                           value = "SkyBlue2"
+                                 ),
+                               ),
+                               conditionalPanel(
+                                 condition = "input.PlotSelector==2",
+                                 #### 8.4.1 (B) Colour of the partitions ####
+                                 selectInput(inputId = 'PlotPaletteGraph',
+                                             label = 'Select palette* for clusters\' colour',
+                                             choices = palette.pals(),
+                                             selected = palette.pals()[2],
+                                             multiple = F
+                                 ),
+                                 div(textOutput(outputId = 'WarningNumColoursGraph'),style='color:red;background-color: #DADADA;	margin-top: 5px; margin-right: 5px; margin-bottom: 5px; margin-left: 5px;text-align: center'),
+                                 # Identify palettes |Commented out| ####
+                                 # WRN<-warnings(
+                                 #   for(i in 1:length(palette.pals())){
+                                 #     palette.colors(n = 50,palette = palette.pals()[i])
+                                 #   })
+                                 # 
+                                 # Palettes8Cols<-
+                                 #   paste(palette.pals()[grep(names(WRN),pattern = '8')], collapse = ', ')
+                                 # Palettes9Cols<-
+                                 #   paste(palette.pals()[grep(names(WRN),pattern = '9')],collapse = ', ')
+                                 # Palettes10Cols<-
+                                 #   paste(palette.pals()[grep(names(WRN),pattern = '10')], collapse = ', ')
+                                 # Palettes26Cols<-
+                                 #   paste(palette.pals()[grep(names(WRN),pattern = '26')], collapse = ', ')
+                                 # Palettes36Cols<-
+                                 #   paste(palette.pals()[grep(names(WRN),pattern = '36')], collapse = ', ')
+                                 
+                                 withTags(div(b("8 colours"),':',i("R3, R4, ggplot2, Accent, Dark 2, Pastel 2, Set 2"))),
+                                 withTags(div(b("9 colours"),':',i("Okabe-Ito, Pastel 1, Set 1"))),
+                                 withTags(div(b("10 colours"),':',i("Paired, Set 3, Tableau 10, Classic Tableau"))),
+                                 withTags(div(b("26 colours"),':',i("Alphabet"))),
+                                 withTags(p(b("36 colours"),':',i("Polychrome 36"))),
+                                 
+                               ),
+                               
                         ),
                       ),
                     ),# END Conditional panel2
@@ -1145,7 +1166,28 @@ ui <- fluidPage(
                                  ),
                                ),
                         ),
-                      ),
+                        column(4,
+                               conditionalPanel(
+                                 condition = 'input.PlotSelector==2',
+                                 h4("Aestetics"),
+                                 ### 8.5.4 Nodes' colours ####
+                                 ### 'PlotPaletteVIS'
+                                 selectInput(inputId = 'PlotPaletteVIS',
+                                             label = 'Select palette for clusters\' colour',
+                                             choices = palette.pals(),
+                                             selected = palette.pals()[6],
+                                             multiple = F),
+                                 hr(),
+                                 div(textOutput(outputId = 'WarningNumColoursVIS'),style='color:red;background-color: #DADADA;	margin-top: 5px; margin-right: 5px; margin-bottom: 5px; margin-left: 5px;text-align: center'),
+                                 hr(),
+                                 withTags(div(b("8 colours"),':',i("R3, R4, ggplot2, Accent, Dark 2, Pastel 2, Set 2"))),
+                                 withTags(div(b("9 colours"),':',i("Okabe-Ito, Pastel 1, Set 1"))),
+                                 withTags(div(b("10 colours"),':',i("Paired, Set 3, Tableau 10, Classic Tableau"))),
+                                 withTags(div(b("26 colours"),':',i("Alphabet"))),
+                                 withTags(p(b("36 colours"),':',i("Polychrome 36"))),
+                                 ),
+                               ),
+                        ),
                       )# Conditional panel3
                     ), # Tab panel4
             ),# Tabset panel
@@ -1156,7 +1198,7 @@ ui <- fluidPage(
         div(class="footer3",
             br(),
             p("Realised for the University of Ljubljana - FDV"),
-            h6("v. 1.7.3 - ",
+            h6("v. 1.7.4 - ",
                i("The Block"),
                ),
         ), # footer3
@@ -1402,7 +1444,7 @@ server <- function(input, output, session) {
         dat<-GetAdjacenctMatrix()
         
         ## Plots the original matrix
-        output<-plotMat(x = dat,ylab = NULL,xlab = NULL,plot.legend = T,
+        output<-plotMat(x = dat,ylab = NULL,xlab = NULL,plot.legend = F,
                 main = NULL,title.line = NULL)
         
         ## Notification "Plotting original matrix instead of partititoned" 
@@ -1423,11 +1465,11 @@ server <- function(input, output, session) {
         dat<-GetAdjacenctMatrix()
         
         ## Plots the original matrix
-        output<-plotMat(x = dat,ylab = NULL,xlab = NULL,plot.legend = T,
+        output<-plotMat(x = dat,ylab = NULL,xlab = NULL,plot.legend = F,
                 main = NULL,title.line = NULL)
     }
     output
-  })
+  },height = 600,width = 800,res = 128)
   
   # 6. Outputting the adjacency table ####
   # "adj"  
@@ -1528,7 +1570,7 @@ server <- function(input, output, session) {
           ### 7.3.3 With or without partitions?
           if(input$PlotSelector==2){
             # Assigns colours to each partition
-            NodesColours <- palette.colors(n = length(clu))
+            NodesColours <- palette.colors(n = length(clu),palette = input$PlotPaletteGraph)
             V(dat2)$color <- NodesColours[V(dat2)$cluster]
           }
           
@@ -1559,7 +1601,20 @@ server <- function(input, output, session) {
             return(NULL)
             } # else of if PlotSystem != 2
         } # else of if PlotSystem == 1
-    })
+    },height = 800,width = 600,res = 128)
+  
+  ## 7.4 Warning for short palette
+  warningGraph<-reactive({
+    if(length(palette.colors(palette = input$PlotPaletteGraph))<length(clu(res = mdllng()))){
+      wrn<-paste('Select a palette supporting at least', length(clu(res = mdllng())), 'colours!')
+    } else {wrn<-NULL}
+    return(wrn)
+  })
+  output$WarningNumColoursGraph<-renderText({
+    wrn<-warningGraph()
+    wrn
+  })
+  
   # 8. Plotting with VisNetwork
   output$igraphPlot<-renderVisNetwork({
     if(input$PlotSys==3){
@@ -1582,7 +1637,7 @@ server <- function(input, output, session) {
       
       # Sets colours according to partition (if applicable)
       if(input$PlotSelector==2){
-        NodesColours <- palette.colors(n = length(clu))
+        NodesColours <- palette.colors(n = length(clu),palette = input$PlotPaletteVIS)
         V(dat2)$color <- NodesColours[V(dat2)$cluster] 
       }
 
@@ -1601,6 +1656,9 @@ server <- function(input, output, session) {
                    main = input$visTitle,
                    submain = input$visSubtitle,
                    background=input$visBackground)%>%
+          visOptions(nodesIdSelection = TRUE,,
+                     height = 600,width = 800,
+                     manipulation = T)%>%
           visHierarchicalLayout(direction = input$visHierDirection,
                                 parentCentralization = input$visHierCentralisation)
       } else {
@@ -1610,9 +1668,23 @@ server <- function(input, output, session) {
         visNetwork(nodes = dat3$nodes, edges = dat3$edges,
                    main = input$visTitle,
                    submain = input$visSubtitle,
-                   background=input$visBackground)
+                   background=input$visBackground)%>%
+          visOptions(nodesIdSelection = TRUE,
+                     height = 600,width = 800)
       }
     }
+  })
+  
+  ## 8.3 Warning for short palette
+  warningVIS<-reactive({
+    if(length(palette.colors(palette = input$PlotPaletteVIS))<length(clu(res = mdllng()))){
+      wrn<-paste('Select a palette supporting at least', length(clu(res = mdllng())), 'colours!')
+    } else {wrn<-NULL}
+    return(wrn)
+  })
+  output$WarningNumColoursVIS<-renderText({
+    wrn<-warningVIS()
+    wrn
   })
   
   # 9. Operating blockmodeling ####
@@ -1877,7 +1949,6 @@ server <- function(input, output, session) {
 
       }
     
-    list<-reactiveValues()
     list<-list()
     
     for(i in 1:length(mdllng()$best)){
@@ -1888,7 +1959,8 @@ server <- function(input, output, session) {
     }
     
     matrix<-list[[input$whichIM]]
-    
+    matrix<-as.data.frame(matrix)
+    colnames(matrix)<-1:ncol(matrix)
     return(matrix)
   })
   
