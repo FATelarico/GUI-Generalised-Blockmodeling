@@ -1,12 +1,13 @@
-if(!require(shiny)) install.packages("shiny")
-if(!require(htmlwidgets)) install.packages("htmlwidgets")
-if(!require(shinythemes))install.packages("shinythemes")
-if(!require(network)) install.packages("network")
-if(!require(blockmodeling)) install.packages("blockmodeling")
-if(!require(igraph)) install.packages("igraph")
-if(!require(visNetwork))install.packages("visNetwork")
-if(!require(intergraph))install.packages("intergraph")
-if(!require(DT))install.packages("DT")
+if(!require(shiny)) install.packages('shiny')
+if(!require(htmlwidgets)) install.packages('htmlwidgets')
+if(!require(shinythemes))install.packages('shinythemes')
+if(!require(network)) install.packages('network')
+if(!require(blockmodeling)) install.packages('blockmodeling')
+if(!require(igraph)) install.packages('igraph')
+if(!require(visNetwork))install.packages('visNetwork')
+if(!require(intergraph))install.packages('intergraph')
+if(!require(DT))install.packages('DT')
+if(!require(shinybusy))install.packages('shinybusy')
 
 library(shiny)
 library(htmlwidgets)
@@ -17,6 +18,8 @@ library(igraph)
 library(network)
 library(visNetwork)
 library(DT)
+library(shinybusy)
+
 
 # §1 Inputs ####
 ui <- fluidPage(
@@ -62,7 +65,16 @@ ui <- fluidPage(
         })
     }),
 
-    
+  add_busy_spinner(
+    spin = 'breeding-rhombus',
+    color = '#978E83',
+    timeout = 100,
+    position = 'top-right',
+    onstart = TRUE,
+    margins = c(10, 10)
+  ),
+  
+  
     # Sidebar 
         tabsetPanel(
             tabPanel(title = "Data upload",
@@ -550,40 +562,64 @@ ui <- fluidPage(
                              ),
                          
                          fluidRow(
-                           column(3,### 5.1.13 Start blockmodeling ####
-                                  withTags(
-                                    h4(
-                                      b("Start blockmodeling"),
-                                    ),
-                                  ),
+                           column(3,
+                                  ### 5.1.13 (A) Start blockmodeling ####
                                   # "blckmdlngRun"
+                                  withTags(h5(b("Start blockmodeling"))),
+                                  
                                   actionButton(inputId = "blckmdlngRun",
                                                label = "Process data",
                                                icon = icon(name = "calculator",
                                                            lib = "font-awesome")
-                                  ),
+                                               ),
                            ),
-                           column(4,offset = 1,
-                                  ### 5.1.14 Download vector partitions ####
-                                  withTags(
-                                    h5(
-                                      b("Download vector partitions"),
+                           column(4,
+                                  withTags(br()),
+                                  ### 5.1.14 Load blockmodeling results from RDS ####
+                                  ### "blckmdlngRDS", "blckmdlngFileRDS"
+                                  
+                                  #### Upload results as RDS file ####
+                                  conditionalPanel(
+                                    condition = 'input.blckmdlngRDS==true',
+                                    fileInput(inputId = "blckmdlngFileRDS",
+                                              label = "Upload a RDS file",
+                                              multiple = F,
+                                              buttonLabel = "Browse",
+                                              placeholder = "Your R file here",
+                                              accept = c(".RDS")
                                     ),
+                                    withTags(h5(i('Use the "Read Data" button under the "Data upload" tab to read the matrix from this file'))),
+                                  ),# Conditional panel RDS
+                                  
+                                  checkboxInput(inputId = "blckmdlngRDS",
+                                               label = "Upload blockmodelling results",
+                                               value = F),
+                                  
+                                  ### 5.1.15 Download blockmodeling RDS ####
+                                  ### "DownloadBlckRDS"
+                                  withTags(h5(b("Download vector partitions"))),
+                                  downloadButton(outputId = "DownloadBlckRDS",
+                                                 label = "Download blockmodeling results",
+                                                 icon = icon(name = "download",
+                                                             lib = "font-awesome")
                                   ),
+                                  
+                           ),
+                           column(4,
+                                  
+                                  ### 5.1.15 Download vector partitions ####
                                   ### "DownloadClu"
+                                  withTags(h5(b("Download vector partitions"))),
                                   downloadButton(outputId = "DownloadClu",
                                                  label = "Download partitions as vector",
                                                  icon = icon(name = "download",
                                                              lib = "font-awesome")
                                   ),
-                           ),
-                           column(4,
-                                  ### 5.1.15 Download image matrix ####
-                                  withTags(
-                                    h5(
-                                      b("Download image matrix"),
-                                    ),
-                                  ),
+                                
+                                  hr(),
+                                  
+                                  ### 5.1.16 Download image matrix ####
+                                  withTags(h5(b("Download image matrix"))),
                                   
                                   conditionalPanel(
                                     condition = "input.dropIM == true",
@@ -593,8 +629,8 @@ ui <- fluidPage(
                                                    icon = icon(name = "table",
                                                                lib = "font-awesome")
                                     ),
-                                    hr(),
                                   ),
+                                  hr(),
                                     # "DownloadIMrds"
                                     downloadButton(outputId = "DownloadIMrds",
                                                    label = "Download as RDS",
@@ -606,6 +642,7 @@ ui <- fluidPage(
                                                 label = 'Drop one-element dimensions',
                                                 value = TRUE
                                   ),
+                                  
                            ) # Col 4
                          ), # Col layout
                            
@@ -1140,12 +1177,18 @@ ui <- fluidPage(
 # §2 Output ####
 server <- function(input, output, session) {
   Tbl<-reactiveValues(Current = NULL,Rows=NULL,Cols=NULL)
+  Blck<-reactiveValues(RunAlready = FALSE)
   
   # 1. Reading data ####
   # "aj"
   ReadData<-eventReactive(input$aj,{
-    # 1.1 Checks if the sample was chosen ####
-    if(input$Sample){
+    ## 1.1 Preloaded data 
+    if(input$blckmdlngRDS){
+      ### 1.1.1 From block model results
+      dat<-mdllng()$initial.param$M
+      MatrixType<-"adjacency"
+    } else if(input$Sample){
+      ### 1.1.2 From sample
       dat<-readRDS(file = "./Sample.rds")
       MatrixType<-"adjacency"
     } else {
@@ -1157,11 +1200,10 @@ server <- function(input, output, session) {
         ### "OtherSep"
         if(input$OtherSep!="")input$sep<-input$OtherSep
         
-        ### 1.2.2 Notification "Reading list in progress" ####
+        ### Notification "Reading list in progress"
         showNotification(ui = "Reading data from uploaded list",
-                         type = "message", id = message,
+                         type = 'default', id = 'ReadingList',
                          duration = NULL, closeButton = F)
-        on.exit(removeNotification(message),add = T)
         
         ### 1.2.3 Determine type of file provided ####
         if(input$type==1){
@@ -1186,9 +1228,19 @@ server <- function(input, output, session) {
                           header = input$ListHeader)
         dat<-as.matrix(x = dat)
         
+        removeNotification('ReadingList')
+        
       } else {
         ## 1.3 Pajek input ####
         ## "PajekFile", "PajekInput"
+        
+        ### Notification "Reading list in progress"
+        showNotification(ui = 'Reading Pajek file',
+                         type = 'default', id = 'ReadingPajek',
+                         duration = NULL, closeButton = F)
+        
+        
+        
         MatrixType<-"adjacency"
         UploadedFile<-input$PajekFile
         
@@ -1203,6 +1255,8 @@ server <- function(input, output, session) {
           loadmatrix(filename = UploadedFile$datapath)
           dat <- loadmatrix(filename = UploadedFile$datapath)
         }
+        
+        removeNotification('ReadingPajek')
       }
     }
     
@@ -1212,7 +1266,6 @@ server <- function(input, output, session) {
   # 2. Create network object ####
   NW<-eventReactive(ReadData(),{
     dat<-ReadData()
-    
     ## 2.1 Determine type of file provided
     if(input$type== 1){
       MatrixType<-"adjacency"
@@ -1249,20 +1302,20 @@ server <- function(input, output, session) {
     ### 2.3.1 Notification "Multiplex matrix"
     if(is.multiplex(dat)){
       showNotification(ui = "The uploaded list contains a multiplex matrix. The matrix may need to be simplified by removing both loops and multiple edges.",
-                       type = "message",
+                       type = 'warning',
                        duration = 5, closeButton = T)
     }
     
     ### 2.3.2 Notification "Bipartite matrix"
     if(network::is.bipartite(dat)){
       showNotification(ui = "The uploaded list contains a bipartite matrix. Bipartition will be ignored",
-                       type = "message",
+                       type = 'warning',
                        duration = 5, closeButton = T)
     }
     
     ### 2.3.3 Notification "Reading file completed"
     showNotification(ui = "Elaboration of uploaded file completed",
-                     type = "message",
+                     type = 'default',
                      duration = 10, closeButton = T)
     dat
   })
@@ -1271,29 +1324,31 @@ server <- function(input, output, session) {
   # Converts edge lists and incidence matrices in adjacency matrix
   
   GetAdjacenctMatrix<-eventReactive(ReadData(),{
-     
-    # Determine type of file provided
-    if(input$type==2||input$type==3){
+    ## 3.1 data from file ####
       
-      ## 3.1 For edge lists and incidence matrices ####
-      if(input$type==2)MatrixType<-"edgelist"
-      if(input$type==3)MatrixType<-"incidence"
-      
-      ## Reads the data as a network object
-      M<-NW()
-      
-      ## Converts the network in an adjacency matrix
-      if(input$ValuedMatrix){
-        ### 3.1.1 for valued networks ####
-        M<-as.matrix.network(x = dat,matrix.type = "adjacency",attrname = "weights")
+      ### Determine type of file provided
+      if(input$type==2||input$type==3){
+        
+        ### 3.1.1 For edge lists and incidence matrices ####
+        if(input$type==2)MatrixType<-"edgelist"
+        if(input$type==3)MatrixType<-"incidence"
+        
+        #### Reads the data as a network object
+        M<-NW()
+        
+        #### Converts the network in an adjacency matrix
+        if(input$ValuedMatrix){
+          ### 3.1.1 (A) for valued networks ####
+          M<-as.matrix.network(x = dat,matrix.type = "adjacency",
+                               attrname = "weights")
+        } else {
+          #### 3.1.1 (B) for non-valued networks ####
+          M<-as.matrix.network(x = dat,matrix.type = "adjacency")
+        }
       } else {
-        ### 3.1.2 for non-valued networks ####
-        M<-as.matrix.network(x = dat,matrix.type = "adjacency")
+        ## 3.2 Otherwise, the data is already in the right format
+        M<-ReadData()
       }
-    } else {
-      ## 3.2 Otherwise, the data is already in the right format
-      M<-ReadData()
-    }
     M
   })
   
@@ -1324,16 +1379,28 @@ server <- function(input, output, session) {
     
     # Checks if the user selected the original (= 1) or the
     # partitioned (= 2) matrix
-    
     if(input$adjSelector==2){
       
       ## 5.1 Plotting the partitioned adjacency matrix ####
       
       ## Loads blockmodeling's result
-      dat<-mdllng()
-      
+      if(Blck$RunAlready==TRUE){
+        dat<-mdllng()
+        output<-plot(dat,main="")
+      } else {
+        dat<-GetAdjacenctMatrix()
+        
+        ## Plots the original matrix
+        output<-plotMat(x = dat,ylab = NULL,xlab = NULL,plot.legend = T,
+                main = NULL,title.line = NULL)
+        
+        ## Notification "Plotting original matrix instead of partititoned" 
+        showNotification(ui = 'Plotting original matrix instead of partitioned because blockmodeling had not been ran yet',
+                         type = 'warning',
+                         duration = 20, closeButton = T)
+      }
       ## Plots the partitioned matrix
-      plot(dat,main="")
+      
     } else {
       
       ## 5.2 Checks if the user selected "plot" or "table" for the original matrix
@@ -1345,10 +1412,10 @@ server <- function(input, output, session) {
         dat<-GetAdjacenctMatrix()
         
         ## Plots the original matrix
-        plotMat(x = dat,ylab = NULL,xlab = NULL,plot.legend = T,
-                main = NULL,title.line = "")
-      }
-
+        output<-plotMat(x = dat,ylab = NULL,xlab = NULL,plot.legend = T,
+                main = NULL,title.line = NULL)
+    }
+    output
   })
   
   # 6. Outputting the adjacency table ####
@@ -1537,49 +1604,59 @@ server <- function(input, output, session) {
     }
   })
   
-  
   # 9. Operating blockmodeling ####
   # "blckmdlng"
   
   mdllng <- eventReactive(input$blckmdlngRun, {
     
-    ## 9.1 Loads data ####
-    M<-GetAdjacenctMatrix()
-    
-    ## 9.2 Checks if the M parameter should be considered ####
-    ## "paramM"
-    if(input$blckmdlngApproach=="val"){
-      # For valued blockmodeling
-      ParamM<-input$ParamM
-      usePreSpecM<-T
-    } else if(input$ThresholdSelected==TRUE&&input$blckmdlngApproach=="bin"){
-      # For binary blockmodeling, if chosen
-      ParamM<-input$ParamThreshold
-      usePreSpecM<-T
+    if(input$blckmdlngRDS){
+      ## 9.1 Blockmodeling from RDS file
+      
+      ## Notification "Reading block-model results from RDS" 
+      showNotification(ui = "Reading blockmodeling's results from file",
+                       type = 'message',id = 'FileCustomBlckmdlng',
+                       duration = 10, closeButton = T)
+      
+      ## Reading RDS file
+      UploadedResults<-input$blckmdlngFileRDS
+      blck<-readRDS(file = UploadedResults$datapath)
     } else {
-      # For all other options, including binary blockmodeling with M not chosen
-      ParamM<-NULL
-      usePreSpecM<-NULL
-    }
-    
-    ## 9.3 Checks if multi-core was allowed ####
-    if(input$MultiCore){
-      MultiCore<-0
-    } else {
-      MultiCore<-1
-    }
-    
-    ## 9.4 Checks customised blockmodeling ####
-    if(input$blckmdlngPrespecifiedYN|input$EditUploadedArray){
+      ## Loads data
+      M<-GetAdjacenctMatrix()
+      
+      ## 9.2 Checks if the M parameter should be considered ####
+      ## "paramM"
+      if(input$blckmdlngApproach=="val"){
+        # For valued blockmodeling
+        ParamM<-input$ParamM
+        usePreSpecM<-T
+      } else if(input$ThresholdSelected==TRUE&&input$blckmdlngApproach=="bin"){
+        # For binary blockmodeling, if chosen
+        ParamM<-input$ParamThreshold
+        usePreSpecM<-T
+      } else {
+        # For all other options, including binary blockmodeling with M not chosen
+        ParamM<-NULL
+        usePreSpecM<-NULL
+      }
+      
+      ## 9.3 Checks if multi-core was allowed ####
+      if(input$MultiCore){
+        MultiCore<-0
+      } else {
+        MultiCore<-1
+      }
+      
+      ## 9.4 Checks customised blockmodeling ####
+      if(input$blckmdlngPrespecifiedYN|input$EditUploadedArray){
         ### Use DT block-model
         condition<-magrittr::and(is.null(input$PrespecifiedArrayRDS),
                                  is.null(input$PrespecifiedArrayRData))
         if(condition&input$EditUploadedArray){
           showNotification(ui = 'Ignoring the uploaded array was activated, but no array had been uploaded. Please, correct!',
-                           duration = 10)
+                           duration = 10,type = 'warning')
         }
         
-        # condition<-magrittr::and(condition,input$ManualPrespecified)
         condition<-magrittr::or(condition,
                                 input$EditUploadedArray)
         
@@ -1588,7 +1665,7 @@ server <- function(input, output, session) {
           
           #### Notification "Reading the manually imputed, custom block-model" 
           showNotification(ui = "Reading the manually imputed, custom block-model",
-                           type = "message",
+                           type = "message",id = 'ManualCustomBlckmdlng',
                            duration = 10, closeButton = T)
           
           #### Loads table from reactive
@@ -1602,7 +1679,7 @@ server <- function(input, output, session) {
           for(i in 1:nrow(df)){
             for(j in 1:ncol(df)){
               num[i,j]<-nchar(df[i,j])
-              }
+            }
           }
           #### The position in the shadow matrix with the most character
           #### is the cell in the reactive table with the most block types
@@ -1637,14 +1714,16 @@ server <- function(input, output, session) {
                 }
               }
             }
+            
+            removeNotification('ManualCustomBlckmdlng')
           }
-          } else {
+        } else {
           if(input$ArrayInput==".RDS"){
             ### 9.4.3 Bloc-model from RDS ####
             
             ### Notification "Reading the custom block-model from RDS" 
-            showNotification(ui = "Reading the custom block-model from RDS",
-                             type = "message",
+            showNotification(ui = "Reading the custom block-model from file",
+                             type = "message",id = 'FileCustomBlckmdlng',
                              duration = 10, closeButton = T)
             
             # Reading RDS file
@@ -1664,45 +1743,58 @@ server <- function(input, output, session) {
             load(file = UploadedFile$datapath)
             ImportedArray<-load(file = UploadedFile$datapath)
             BlockTypes<-eval(parse(text = ImportedArray))
-            } # else if RData
-          } # else if DT
-      NumClusters<-dim(BlockTypes)[length(dim(BlockTypes))]
+          } # else if RData
+          
+          removeNotification('FileCustomBlckmdlng')
+        } # else if DT
+        NumClusters<-dim(BlockTypes)[length(dim(BlockTypes))]
       } else {
-            BlockTypes<-input$blckmdlngBlockTypes
-            NumClusters<-input$blckmdlngNumClusters
-          }
-        
+        BlockTypes<-input$blckmdlngBlockTypes
+        NumClusters<-input$blckmdlngNumClusters
+      }
       
       
+      
+      
+      ## Notification "Executing blockmodeling" 
+      showNotification(ui = 'Blockmodeling started succesfully!',
+                       type = "default",
+                       duration = 10, closeButton = T)
+      
+      ## Modal spinner, show
+      show_modal_spinner(spin = 'semipolar',
+                         color = "#978E83",
+                         text = 'Computing clusters, please wait...')
+      
+      ## 9.5 Executes blockmodeling ####
+      blck<-
+        optRandomParC(M = M,
+                      k = NumClusters,
+                      approaches = input$blckmdlngApproach,
+                      blocks = BlockTypes,
+                      rep = input$blckmdlngRepetitions,
+                      save.initial.param.opt = input$blckmdlngInitialParams,
+                      deleteMs = T,
+                      max.iden = input$blckmdlngMaxSavedResults,
+                      return.all = input$blckmdlngAll,
+                      return.err = T,
+                      RandomSeed = input$blckmdlngRandomSeed,
+                      printRep = input$blckmdlngPrintRep,
+                      usePreSpecM = usePreSpecM,
+                      preSpecM = ParamM,
+                      nCores = MultiCore
+        )
+      
+      ## Modal spinner, remove
+      remove_modal_spinner()
+      
+      # Notification "Blockmodeling completed"
+      showNotification(ui = "Blockmodeling completed",
+                       type = "message",
+                       duration = 2, closeButton = T)
+    }
     
-    # Notification "Executing blockmodeling" 
-    showNotification(ui = "Executing blockmodeling",
-                     type = "message",
-                     duration = 10, closeButton = T)
     
-    # Executes blockmodeling
-    blck<-
-    optRandomParC(M = M,
-                  k = NumClusters,
-                  approaches = input$blckmdlngApproach,
-                  blocks = BlockTypes,
-                  rep = input$blckmdlngRepetitions,
-                  save.initial.param.opt = input$blckmdlngInitialParams,
-                  deleteMs = T,
-                  max.iden = input$blckmdlngMaxSavedResults,
-                  return.all = input$blckmdlngAll,
-                  return.err = T,
-                  RandomSeed = input$blckmdlngRandomSeed,
-                  printRep = input$blckmdlngPrintRep,
-                  usePreSpecM = usePreSpecM,
-                  preSpecM = ParamM,
-                  nCores = MultiCore
-                  )
-    saveRDS(object = blck,file = "F:/Desktop/blck.rds")
-    # Notification "Blockmodeling completed" 
-    showNotification(ui = "Blockmodeling completed",
-                     type = "message",
-                     duration = 2, closeButton = T)
     
     blck
     })
@@ -1721,7 +1813,7 @@ server <- function(input, output, session) {
     
     blck<-mdllng()
     
-    tbl<-matrix(data="",byrow = F,ncol=5,
+    tbl<-matrix(data=NA,byrow = F,ncol=5,
                 nrow = length(blck$best))
     
     colnames(tbl)<-c("Network size","Approaches",
@@ -1792,6 +1884,14 @@ server <- function(input, output, session) {
     IM()
   },colnames = T,rownames = T,striped = T,hover = T,bordered = T,
   spacing = "s",width = "auto",align = "c",digits = 0,quoted = F)
+  
+  # 11. Download blockmodeling results to file ####
+  output$DownloadBlckRDS <- downloadHandler(
+    filename = "Blockmodeling results.RDS",
+    content = function(file) {
+      saveRDS(object = mdllng(),file = file)
+    }
+  )
   
   # 11. Download clusters to file ####
   output$DownloadClu <- downloadHandler(
