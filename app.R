@@ -1794,7 +1794,7 @@ server <- function(input, output, session) {
           
           #### 9.4.2(B) Turning into an array ####
           # Creates an empty array of the right dimension
-          BlockTypes<-array(NA,dim = c(FirstDimension,1,ncol=ncol(df),nrow=nrow(df)))
+          BlockTypes<-array(NA,dim = c(FirstDimension,1,nrow=nrow(df),ncol=ncol(df)))
           
           # Fills it by layer, ...
           for(k in 1:FirstDimension){
@@ -1811,6 +1811,12 @@ server <- function(input, output, session) {
                 }
               }
             }
+            
+            if(dim(BlockTypes)[1]==1){
+              BlockTypes<-BlockTypes[1,1,,]
+            }
+            
+            
             
             removeNotification('ManualCustomBlckmdlng')
           }
@@ -1948,7 +1954,8 @@ server <- function(input, output, session) {
   
   ## 10.3 Renders blockmodeling output as summary ####
   output$Summaryblckmdlng <- renderPrint({
-    mdllng()
+    blck<-mdllng()
+    blck
   })
   
   ## 10.4 Image matrix (IM) ####
