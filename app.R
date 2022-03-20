@@ -2188,7 +2188,7 @@ server <- function(input, output, session) {
       TblCurrent<-as.data.frame(TblCurrent)
       ## Outputs
       TblCurrent
-    },selection = list(mode="multiple",target='cell'),
+    },selection = list(mode="multiple",target='cell',selectable=matrix(c(-1:-nrow(Tbl$Current),rep(0,nrow(Tbl$Current))),ncol = 2)),
     options = list(paging =FALSE, searching=FALSE,ordering=FALSE),style='bootstrap4')
   
 }
