@@ -346,7 +346,7 @@ ui <- fluidPage(
                                                step = 1
                                                ),
                                   ### 5.1.5 Saving initial parameters ####
-                                  withTags(i("Saving the additional parameters can take up more memory, but also preserve precious informationa")),
+                                  withTags(i("Saving the additional parameters can take up more memory, but also preserve precious information")),
                                   ### "blckmdlngInitialParams"
                                   checkboxInput(inputId = "blckmdlngInitialParams",
                                                 label = 'Should the initial parameters be saved?',
@@ -562,22 +562,29 @@ ui <- fluidPage(
                              ),
                          
                          fluidRow(
-                           column(3,
-                                  ### 5.1.13 (A) Start blockmodeling ####
-                                  # "blckmdlngRun"
-                                  withTags(h5(b("Start blockmodeling"))),
-                                  
-                                  actionButton(inputId = "blckmdlngRun",
-                                               label = "Process data",
-                                               icon = icon(name = "calculator",
-                                                           lib = "font-awesome")
-                                               ),
-                           ),
+                           column(4,p('')),
                            column(4,
-                                  withTags(br()),
+                             ### 5.1.13 (A) Start blockmodeling ####
+                             # "blckmdlngRun"
+                             withTags(h5(b("Start blockmodeling"))),
+                             
+                             actionButton(inputId = "blckmdlngRun",
+                                          label = "Process data",
+                                          icon = icon(name = "calculator",
+                                                      lib = "font-awesome")
+                                          ),
+                           ),
+                           column(4,p(''))
+                         ),
+                         hr(),
+                         
+                         
+                         fluidRow(
+                           column(4,
+                                  withTags(h5(b("Upload results"))),
                                   ### 5.1.14 Load blockmodeling results from RDS ####
                                   ### "blckmdlngRDS", "blckmdlngFileRDS"
-                                  
+
                                   #### Upload results as RDS file ####
                                   conditionalPanel(
                                     condition = 'input.blckmdlngRDS==true',
@@ -590,62 +597,69 @@ ui <- fluidPage(
                                     ),
                                     withTags(h5(i('Use the "Read Data" button under the "Data upload" tab to read the matrix from this file'))),
                                   ),# Conditional panel RDS
-                                  
+
                                   checkboxInput(inputId = "blckmdlngRDS",
                                                label = "Upload blockmodelling results",
                                                value = F),
-                                  
+
+                           ),
+                           column(8,
                                   ### 5.1.15 Download blockmodeling RDS ####
                                   ### "DownloadBlckRDS"
-                                  withTags(h5(b("Download vector partitions"))),
-                                  downloadButton(outputId = "DownloadBlckRDS",
-                                                 label = "Download blockmodeling results",
-                                                 icon = icon(name = "download",
-                                                             lib = "font-awesome")
+                                  withTags(h5(b("Downloads"))),
+                                  p(
+                                    downloadButton(outputId = "DownloadBlckRDS",
+                                                   label = "Download blockmodeling results",
+                                                   icon = icon(name = "download",
+                                                               lib = "font-awesome")
+                                                   ),
                                   ),
-                                  
-                           ),
-                           column(4,
-                                  
-                                  ### 5.1.15 Download vector partitions ####
-                                  ### "DownloadClu"
-                                  withTags(h5(b("Download vector partitions"))),
-                                  downloadButton(outputId = "DownloadClu",
-                                                 label = "Download partitions as vector",
-                                                 icon = icon(name = "download",
-                                                             lib = "font-awesome")
-                                  ),
-                                
-                                  hr(),
-                                  
-                                  ### 5.1.16 Download image matrix ####
-                                  withTags(h5(b("Download image matrix"))),
-                                  
+
+                                 p(
+                                   ### 5.1.16 Download vector partitions ####
+                                   ### "DownloadClu"
+                                   downloadButton(outputId = "DownloadClu",
+                                                  label = "Download partitions as vector",
+                                                  icon = icon(name = "download",
+                                                              lib = "font-awesome")
+                                   ),
+                                 ),
+                                  ### 5.1.17 Download image matrix ####
                                   conditionalPanel(
                                     condition = "input.dropIM == true",
-                                    # "DownloadIMtext"
-                                    downloadButton(outputId = "DownloadIMtext",
-                                                   label = "Download as txt",
+                                    p(
+                                      # "DownloadIMtext"
+                                      downloadButton(outputId = "DownloadIMtext",
+                                                     label = "Download image matrix as txt",
+                                                     inline=T,
+                                                     icon = icon(name = "table",
+                                                                 lib = "font-awesome")
+                                                     ),
+
+                                    ),
+
+                                  ),
+                                 # "DownloadIMrds"
+                                  p(
+                                    downloadButton(outputId = "DownloadIMrds",
+                                                   label = "Download image matrix as RDS",
+                                                   inline=T,
                                                    icon = icon(name = "table",
                                                                lib = "font-awesome")
                                     ),
                                   ),
-                                  hr(),
-                                    # "DownloadIMrds"
-                                    downloadButton(outputId = "DownloadIMrds",
-                                                   label = "Download as RDS",
-                                                   icon = icon(name = "table",
-                                                               lib = "font-awesome",)
-                                    ),
                                   # "DropIM"
                                   checkboxInput(inputId = "dropIM",
                                                 label = 'Drop one-element dimensions',
-                                                value = TRUE
+                                                value = TRUE,
+                                                width = '100%'
                                   ),
-                                  
-                           ) # Col 4
+
+                           ) # Col 8
                          ), # Col layout
-                           
+                         
+                         
+                         
                          
                          ## 5.2 Show the blockmodeling's summary ####
                          # "Tableblckmdlng", "Summaryblckmdlng"
