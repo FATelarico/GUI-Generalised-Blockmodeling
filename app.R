@@ -714,7 +714,7 @@ ui <- fluidPage(
                      ## 6.4 Plot output original matrix ####
                      plotOutput(outputId = "adjPlot"),
                      ## 6.5 Plot output partitioned matrix ####
-                     plotOutput(outputId = "adjPartPlot"),
+                     # plotOutput(outputId = "adjPartPlot"), #This output is not generated
                      ),
             
             tabPanel(title = "Network Plot",
