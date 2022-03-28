@@ -193,7 +193,6 @@ ui <- fluidPage(
                             #   ),
                             withTags(div(
                               h6(b(i("Only change the settings below if needed"))),
-                              h6("Defaults will work in most cases"),
                             )),
                             ### 3.2 Direction ####
                             # "directionality"
@@ -207,20 +206,42 @@ ui <- fluidPage(
                                           label = 'Self-links',
                                           value = TRUE,
                             ),
-                            ### DISABLED # 3.4 Multiple ####
-                            # "parallel"
-                            # checkboxInput(inputId = "parallel",
-                            #               label = 'Are parallel edges allowed?',
-                            #               value = TRUE),
-                            
-                            ### 3.5 Button "Read data" ####
-                            # "aj"
-                            actionButton(inputId = "aj",
-                                         label = "Read Data",
-                                         icon = icon(name = "upload",
-                                                     lib = "font-awesome")
-                                         )
+                            ### 3.4 Add attribute ####
+                            ### "AddAttr"
+                            checkboxInput(inputId = 'AddAttr',
+                                          label = 'Add a vertex attribute?',
+                                          value = F),
+                            conditionalPanel(
+                              condition = 'input.AddAttr==true',
+                              conditionalPanel(
+                                condition = 'input.Sample==false',
+                                #### 3.4.1 Attribute values
+                                #### "AddAttrFile"
+                                fileInput(inputId = "AddAttrFile",
+                                          label = 'Values from file',
+                                          placeholder = 'A text file containining the values',
+                                          multiple = F,
+                                          accept = 'text/plain'
+                                ),
+                                #### 3.4.2 Attribute name
+                                #### 'AddAttrName'
+                                textInput(inputId = "AddAttrName",
+                                          label = 'Attribute name',
+                                          placeholder = 'Do not use blanks',
+                                          value = NULL),
+                                
+                                ),
                             ),
+                            
+                            
+                            ),
+                     ### 3.5 Button "Read data" ####
+                     # "aj"
+                     actionButton(inputId = "aj",
+                                  label = "Read Data",
+                                  icon = icon(name = "upload",
+                                              lib = "font-awesome")
+                     )
                      ),# Fluid row
                      # 4. Show the network's summary ####
                      # "summary"
@@ -281,7 +302,7 @@ ui <- fluidPage(
                                     condition ="input.blckmdlngApproach == 'bin'",
                                     # Asks whether the user wants to set a threshold
                                     checkboxInput(inputId = "ThresholdSelected",
-                                                  label = 'Use a threshold',
+                                                  label = 'Use a binarisation threshold',
                                                   value = F,
                                                   width = "100%"
                                     ),
@@ -682,7 +703,7 @@ ui <- fluidPage(
                      ), # Tab panel2
           
             # 6. Show the Adjacency Matrix ####
-            # "adjOptType","adj","adjPlot","adjPartPlot"
+            # "adjOptType","adj","adjPlot"
             tabPanel(title = "Adjacency matrix",
                      hr(),
                      fluidRow(
@@ -713,8 +734,6 @@ ui <- fluidPage(
                      tableOutput("adj"),
                      ## 6.4 Plot output original matrix ####
                      plotOutput(outputId = "adjPlot"),
-                     ## 6.5 Plot output partitioned matrix ####
-                     # plotOutput(outputId = "adjPartPlot"), #This output is not generated
                      ),
             
             tabPanel(title = "Network Plot",
@@ -897,19 +916,20 @@ ui <- fluidPage(
                                          value = "black"
                                          ),
                                
-                               ### 8.4.3 Shape of the nodes ####
-                               ### "PlotVertexShape"
-                               radioButtons(inputId = "PlotVertexShape",
-                                            label = "Shape of the plot's nodes?",
-                                            choices = c("Circle"="circle",
-                                                        "Square"="square",
-                                                        "Rectangle"="rectangle",
-                                                        # "Circle and Square"="csquare",
-                                                        # "Circle and Rectangle"="crectangle",
-                                                        "Vertical Rectangle"="vrectangle",
-                                                        "Sphere"="sphere","None"="none"),
-                                            inline = TRUE
-                                            ),
+                               #### 8.4.3 Shape ###
+                               #### "PlotVertexShape"
+                               selectInput(inputId = "PlotVertexShape",
+                                           label = "Shape of the plot's nodes?",
+                                           choices = c("Circle"="circle",
+                                                       "Square"="square",
+                                                       "Rectangle"="rectangle",
+                                                       # "Circle and Square"="csquare",
+                                                       # "Circle and Rectangle"="crectangle",
+                                                       "Vertical Rectangle"="vrectangle",
+                                                       "Sphere"="sphere","None"="none"),
+                                           selected = 'cicle',
+                                           multiple = F
+                               ),
                                ### 8.4.4 Font Family of the nodes' labels ####
                                ### "PlotVertexLabelFontFamily"
                                radioButtons(inputId = "PlotVertexLabelFontFamily",
@@ -1075,15 +1095,37 @@ ui <- fluidPage(
                                              label = 'Curved edges',
                                              value = FALSE
                                ), 
+                               
+                               
                                conditionalPanel(
                                  condition = "input.PlotSelector==1",
-                                 #### 8.4.1 (A) Color of the node without partitions ####
-                                 #### "PlotVertexColour"
-                                 textInput(inputId = "PlotVertexColour",
-                                           label = 'Color of the plot\'s nodes',
-                                           value = "SkyBlue2"
+                                 conditionalPanel(
+                                   condition = "input.AddAttr==true",
+                                   ### 8.4.1 Color of the nodes ####
+                                   checkboxInput(inputId = 'AttrVertexColYN',
+                                                 label = 'Colour nodes from attribute',
+                                                 value = F),
                                  ),
-                               ),
+                                 
+                                 conditionalPanel(
+                                   condition = 'input.AttrVertexColYN==false',
+                                   #### 8.4.1 (A) Color of the node without partitions ####
+                                   #### "PlotVertexColour"
+                                   textInput(inputId = "PlotVertexColour",
+                                             label = 'Color of the plot\'s nodes',
+                                             value = "SkyBlue2"
+                                   ),
+                                 ),
+                                 ),
+                                 conditionalPanel(
+                                   condition = "input.PlotSelector==1&&input.AttrVertexColYN==true",
+                                   selectInput(inputId = 'NodePaletteGraph',
+                                               label = 'Select palette* for nodes\' colour',
+                                               choices = palette.pals(),
+                                               selected = palette.pals()[2],
+                                               multiple = F
+                                   ),
+                                 ),
                                conditionalPanel(
                                  condition = "input.PlotSelector==2",
                                  #### 8.4.1 (B) Colour of the partitions ####
@@ -1232,8 +1274,17 @@ ui <- fluidPage(
 
 # §2 Output ####
 server <- function(input, output, session) {
+  
+  # 0. Reactive values ####
   Tbl<-reactiveValues(Current = NULL,Rows=NULL,Cols=NULL)
   Blck<-reactiveValues(RunAlready = FALSE)
+  
+  observeEvent(eventExpr = c(Blck$RunAlready),handlerExpr = {
+    YN<<-Blck$RunAlready
+    if(is.null(YN)){
+      Blck$RunAlready<<-FALSE
+    }
+  })
   
   # 1. Reading data ####
   # "aj"
@@ -1384,6 +1435,15 @@ server <- function(input, output, session) {
     showNotification(ui = "Elaboration of uploaded file completed",
                      type = 'default',
                      duration = 10, closeButton = T)
+    
+    ## 2.4 Add attributes ####
+    if(input$AddAttr){
+      AddAttrVal<-read.table(file = input$AddAttrFile$datapath,
+                             header = F,quote = "",col.names = F)
+      network::set.vertex.attribute(x = dat,attrname = input$AddAttrName,
+                                    value = AddAttrVal)
+    }
+    
     dat
   })
   
@@ -1449,17 +1509,16 @@ server <- function(input, output, session) {
     if(input$adjSelector==2){
       
       ## 5.1 Plotting the partitioned adjacency matrix ####
-      
       ## Loads blockmodeling's result
       if(Blck$RunAlready==TRUE){
         dat<-mdllng()
         output<-plot(dat,main="")
       } else {
         dat<-GetAdjacenctMatrix()
-        
+        dat<<-dat
         ## Plots the original matrix
-        output<-plotMat(x = dat,ylab = NULL,xlab = NULL,plot.legend = F,
-                main = NULL,title.line = NULL)
+        output<-plotMat(x = dat,ylab = '',xlab = '',plot.legend = F,
+                main = '',title.line = '')
         
         ## Notification "Plotting original matrix instead of partititoned" 
         showNotification(ui = 'Plotting original matrix instead of partitioned because blockmodeling had not been ran yet',
@@ -1499,31 +1558,30 @@ server <- function(input, output, session) {
     ## 6.3 Prints the matrix ####
     dat
     },rownames = TRUE) 
-
+  
   # 7. Non interactive plots ####
   # "NetworkPlot", "PlotSys"
   output$NetworkPlot<-renderPlot({
     
-    ## 7.1 Adds the partitions if needed
-    
-    if(input$PlotSelector==2){
-      ## Reads data in
-      dat<-NW()
-      clu<-blockmodeling::clu(res=mdllng())
-      dat<-
-        network::set.vertex.attribute(x = dat,
-                                      attrname = "cluster",
-                                      value = clu)
+    ## Checks the plotting system
+    if(input$PlotSys==1){
+      ## 7.1 Plotting with network ####
+      
+      ## 7.1.1 Adds the partitions if needed
+      
+      if(input$PlotSelector==2){
+        ## Reads data in
+        dat<-NW()
+        clu<-blockmodeling::clu(res=mdllng())
+        dat<-
+          network::set.vertex.attribute(x = dat,
+                                        attrname = "cluster",
+                                        value = clu)
       } else {
         dat<-NW()
       }
-    
-    ## Checks the plotting system
-    if(input$PlotSys==1){
       
-      ## 7.2 Plotting with network ####
-      
-      ### 7.2.1 Checks setting for the arrows ####
+      ### 7.1.2 Checks setting for the arrows ####
       if (input$OverridePlotArrows){
         PlotArrows<-input$PlotArrows
       } else {
@@ -1531,7 +1589,7 @@ server <- function(input, output, session) {
       }
       
       
-      ### 7.2.2 With or without partitions?
+      ### 7.1.3 With or without partitions?
       if(input$PlotSelector==2){
         VertexCol<-"cluster"
       } else {
@@ -1552,45 +1610,90 @@ server <- function(input, output, session) {
       )
       
       } else {
-        ## 7.3 Plotting with igraph ####
-        if (input$PlotSys==2) {
-          # If the user selected igraph
-          
-          # Converts to igraph
-          dat2<- intergraph::asIgraph(dat)
-          
-          ### 7.3.1 Edges width (manual/valued) ####
-          # Checks if the user wants the edges' width to
-          # represent the network's value
-          if(input$igraphPlotEdgeWidthValues==FALSE){
-            igraphPlotEdgeWidth <- input$igraphPlotEdgeWidth
+        ## 7.2 Plotting with igraph ###
+        ### Create graph
+        {
+          if(input$directionality){
+            iGraphDir<-'directed'
           } else {
-            temp <- igraph::get.edge.attribute(dat2)$weights
-            MaxTemp<- max(temp)
-            igraphPlotEdgeWidth <- input$igraphPlotEdgeMaxWidth/MaxTemp*temp
+            iGraphDir<-'undirected'
           }
           
-          ### 7.3.2 Setting arrows ####
-          if(input$OverrideigraphPlotArrows){
-            #### 7.3.2 (A) Overriding arrows ####
-            if(input$igraphPlotArrow==FALSE) igraphPlotArrow <- 0
-            if(input$igraphPlotArrow==TRUE) igraphPlotArrow <- 2
+          if(input$ValuedMatrix){
+            iGraphValued<-TRUE
           } else {
-            #### 7.3.2 (B) Default settings ####
-            if(input$directionality==FALSE) igraphPlotArrow <- 0
-            if(input$directionality==TRUE) igraphPlotArrow <- 2
+            iGraphValued<-NULL
+          }
+          
+          dat2<-
+            igraph::graph.adjacency(adjmatrix = GetAdjacenctMatrix(),
+                                    weighted = iGraphValued,
+                                    mode = iGraphDir,
+                                    add.rownames = TRUE
+            )
+          ## Add attributes
+          if(input$AddAttr){
+            AddAttrVal<-read.table(file = input$AddAttrFile$datapath,
+                                   header = F,quote = "",col.names = F)
+            V(dat2)$Added.Attr<-AddAttrVal[[1]]
           }
           
           ### 7.3.3 With or without partitions?
           if(input$PlotSelector==2){
+            V(dat2)$cluster<-clu(res = mdllng())
             # Assigns colours to each partition
-            NodesColours <- palette.colors(n = length(clu),palette = input$PlotPaletteGraph)
+            
+            NodesColours <-
+              palette.colors(n = length(unique(V(dat2)$cluster)),
+                             palette = input$PlotPaletteGraph)
+            
             V(dat2)$color <- NodesColours[V(dat2)$cluster]
+            
+          } else if(input$AttrVertexColYN){
+            NodesColours <- palette.colors(n = length(unique(V(dat2)$Added.Attr)),
+                                           palette = input$NodePaletteGraph)
+            for(i in 1:length(unique(V(dat2)$Added.Attr))){
+              V(dat2)$Added.Attr<-gsub(pattern = unique(V(dat2)$Added.Attr)[i],
+                                       replacement = i, x = V(dat2)$Added.Attr)
+            }
+            
+            V(dat2)$color <- NodesColours[as.numeric(V(dat2)$Added.Attr)]
+          } else {
+            
+            V(dat2)$color <- input$PlotVertexColour
           }
+        }
+        
+        ### 7.2.1 Edges width (manual/valued) ####
+        # Checks if the user wants the edges' width to
+        # represent the network's value
+        if(input$igraphPlotEdgeWidthValues==FALSE){
+          igraphPlotEdgeWidth <- input$igraphPlotEdgeWidth
+        } else {
+          temp <- igraph::get.edge.attribute(dat2)$weight
+          MaxTemp<- max(temp)
+          igraphPlotEdgeWidth <- input$igraphPlotEdgeMaxWidth/MaxTemp*temp
+        }
+        
+        ### 7.2.2 Setting arrows ####
+        if(input$OverrideigraphPlotArrows){
+          #### 7.3.2 (A) Overriding arrows ####
+          if(input$igraphPlotArrow==FALSE) igraphPlotArrow <- 0
+          if(input$igraphPlotArrow==TRUE) igraphPlotArrow <- 2
+        } else {
+          #### 7.3.2 (B) Default settings ####
+          if(input$directionality==FALSE) igraphPlotArrow <- 0
+          if(input$directionality==TRUE) igraphPlotArrow <- 2
+        }
+        
+        
+        if (input$PlotSys==2) {
+          # If the user selected igraph
+
           
           ### Plots igraph
           igraph::plot.igraph(x = dat2,
-                              vertex.label= igraph::get.vertex.attribute(dat2)$vertex.names,
+                              vertex.label= V(dat2)$name,
                               vertex.size = input$PlotVertexSize,
                               # vertex.color= ,
                               vertex.frame.color = input$PlotVertexFrameColour,
@@ -1617,10 +1720,10 @@ server <- function(input, output, session) {
         } # else of if PlotSystem == 1
     },height = 800,width = 600,res = 128)
   
-  ## 7.4 Warning for short palette
-  warningGraph<-reactive({
-    if(length(palette.colors(palette = input$PlotPaletteGraph))<length(clu(res = mdllng()))){
-      wrn<-paste('Select a palette supporting at least', length(clu(res = mdllng())), 'colours!')
+  ## 7.2.3 Warning for short palette
+  warningGraph<-eventReactive(input$PlotPaletteGraph,{
+    if(length(palette.colors(palette = input$PlotPaletteGraph))<length(unique(clu(res = mdllng())))){
+      wrn<-paste('Select a palette supporting at least', length(unique(clu(res = mdllng()))), 'colours!')
     } else {wrn<-NULL}
     return(wrn)
   })
@@ -1632,34 +1735,64 @@ server <- function(input, output, session) {
   # 8. Plotting with VisNetwork
   output$igraphPlot<-renderVisNetwork({
     if(input$PlotSys==3){
-      # If the user selected VisNetwork
-      
-      # Reads data in and adds the partitions if needed
-      if(input$PlotSelector==2){
-        dat<-NW()
-        clu<-clu(res=mdllng())
-        dat<-
-          network::set.vertex.attribute(x = dat,attrname = "cluster",
-                               value = clu)
+      ## If the user selected VisNetwork
+      ## Create graph
+      ### Create graph
+      {
+        if(input$directionality){
+          iGraphDir<-'directed'
+        } else {
+          iGraphDir<-'undirected'
+        }
+        if(input$ValuedMatrix){
+          iGraphValued<-TRUE
+        } else {
+          iGraphValued<-NULL
+        }
         
-      } else {
-        dat<-NW()
+        dat2<-
+          igraph::graph.adjacency(adjmatrix = GetAdjacenctMatrix(),
+                                  weighted = iGraphValued,
+                                  mode = iGraphDir,
+                                  add.rownames = TRUE
+          )
+        ## Add attributes
+        if(input$AddAttr){
+          AddAttrVal<-read.table(file = input$AddAttrFile$datapath,
+                                 header = F,quote = "",col.names = F)
+          V(dat2)$Added.Attr<-AddAttrVal[[1]]
+        }
+        
+        ### 7.3.3 With or without partitions?
+        if(input$PlotSelector==2){
+          V(dat2)$cluster<-clu(res = mdllng())
+          # Assigns colours to each partition
+          
+          NodesColours <-
+            palette.colors(n = length(unique(V(dat2)$cluster)),
+                           palette = input$PlotPaletteVIS)
+          
+          V(dat2)$color <- NodesColours[V(dat2)$cluster]
+          
+        } else if(input$AttrVertexColYN){
+          NodesColours <- palette.colors(n = length(unique(V(dat2)$Added.Attr)),
+                                         palette = input$PlotPaletteVIS)
+          for(i in 1:length(unique(V(dat2)$Added.Attr))){
+            V(dat2)$Added.Attr<-gsub(pattern = unique(V(dat2)$Added.Attr)[i],
+                                     replacement = i, x = V(dat2)$Added.Attr)
+          }
+          
+          V(dat2)$color <- NodesColours[as.numeric(V(dat2)$Added.Attr)]
+        } else {
+          V(dat2)$color <- input$PlotVertexColour
+        }
       }
       
-      # Converts to igraph
-      dat2<-intergraph::asIgraph(dat)
-      
-      # Sets colours according to partition (if applicable)
-      if(input$PlotSelector==2){
-        NodesColours <- palette.colors(n = length(clu),palette = input$PlotPaletteVIS)
-        V(dat2)$color <- NodesColours[V(dat2)$cluster] 
-      }
-
-      # Converts to visNetwork
+      ## Converts to visNetwork
       dat3<-toVisNetworkData(dat2)
       
-      # adds correct labels
-      dat3$nodes$label<-dat3$nodes$vertex.names
+      ## adds correct labels
+      dat3$nodes$label<-dat3$nodes$name
       
       if(input$visHier){
         
@@ -1670,7 +1803,7 @@ server <- function(input, output, session) {
                    main = input$visTitle,
                    submain = input$visSubtitle,
                    background=input$visBackground)%>%
-          visOptions(nodesIdSelection = TRUE,,
+          visOptions(nodesIdSelection = F,,
                      height = 600,width = 800,
                      manipulation = T)%>%
           visHierarchicalLayout(direction = input$visHierDirection,
@@ -1683,16 +1816,16 @@ server <- function(input, output, session) {
                    main = input$visTitle,
                    submain = input$visSubtitle,
                    background=input$visBackground)%>%
-          visOptions(nodesIdSelection = TRUE,
+          visOptions(nodesIdSelection = F,
                      height = 600,width = 800)
       }
     }
   })
   
   ## 8.3 Warning for short palette
-  warningVIS<-reactive({
-    if(length(palette.colors(palette = input$PlotPaletteVIS))<length(clu(res = mdllng()))){
-      wrn<-paste('Select a palette supporting at least', length(clu(res = mdllng())), 'colours!')
+  warningVIS<-eventReactive(input$PlotPaletteVIS,{
+    if(length(palette.colors(palette = input$PlotPaletteVIS))<length(unique(clu(res = mdllng())))){
+      wrn<-paste('Select a palette supporting at least', length(unique(clu(res = mdllng()))), 'colours!')
     } else {wrn<-NULL}
     return(wrn)
   })
@@ -1892,7 +2025,7 @@ server <- function(input, output, session) {
       remove_modal_spinner()
       
       ## Remember that the blockmodel was run
-      Blck$RunAlready<<-TRUE
+      # Blck$RunAlready<<-TRUE
       
       # Notification "Blockmodeling completed"
       showNotification(ui = "Blockmodeling completed",
