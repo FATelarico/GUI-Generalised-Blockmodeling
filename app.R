@@ -35,7 +35,7 @@ ui <- fluidPage(
 
 
 
-    # 0. Title with HTML/CSS ####
+    # 0. Decorations with HTML/CSS ####
     titlePanel({
       withTags({
         div(class="Header",
@@ -58,10 +58,9 @@ ui <- fluidPage(
                     'by Ale\u0161 \u017Diberna and',
                     a(href="https://cran.r-project.org/package=network", "network"),
                     'by Carter Butts and others',
-                )# /div "title2"
-            )# /div "titleRect"
+                    )# /div "title2"
+                )# /div "titleRect"
             ) # div "Header"
-        
         })
     }),
 
@@ -207,30 +206,33 @@ ui <- fluidPage(
                                           value = TRUE,
                             ),
                             ### 3.4 Add attribute ####
-                            ### "AddAttr"
-                            checkboxInput(inputId = 'AddAttr',
-                                          label = 'Add a vertex attribute?',
-                                          value = F),
                             conditionalPanel(
-                              condition = 'input.AddAttr==true',
+                              condition = "input.Sample == false",
+                              ### "AddAttr"
+                              checkboxInput(inputId = 'AddAttr',
+                                            label = 'Add a vertex attribute?',
+                                            value = F),
                               conditionalPanel(
-                                condition = 'input.Sample==false',
-                                #### 3.4.1 Attribute values
-                                #### "AddAttrFile"
-                                fileInput(inputId = "AddAttrFile",
-                                          label = 'Values from file',
-                                          placeholder = 'A text file containining the values',
-                                          multiple = F,
-                                          accept = 'text/plain'
+                                condition = 'input.AddAttr==true',
+                                conditionalPanel(
+                                  condition = 'input.Sample==false',
+                                  #### 3.4.1 Attribute values
+                                  #### "AddAttrFile"
+                                  fileInput(inputId = "AddAttrFile",
+                                            label = 'Values from file',
+                                            placeholder = 'A text file containining the values',
+                                            multiple = F,
+                                            accept = 'text/plain'
+                                  ),
+                                  #### 3.4.2 Attribute name
+                                  #### 'AddAttrName'
+                                  textInput(inputId = "AddAttrName",
+                                            label = 'Attribute name',
+                                            placeholder = 'Do not use blanks',
+                                            value = NULL),
+                                  
                                 ),
-                                #### 3.4.2 Attribute name
-                                #### 'AddAttrName'
-                                textInput(inputId = "AddAttrName",
-                                          label = 'Attribute name',
-                                          placeholder = 'Do not use blanks',
-                                          value = NULL),
-                                
-                                ),
+                              ),
                             ),
                             
                             
@@ -420,7 +422,7 @@ ui <- fluidPage(
                                   ### "whichIM"
                                   condition = "input.blckmdlngAll==true",
                                   numericInput(inputId = "whichIM",
-                                               label = 'Which "best" partition should be printed?',
+                                               label = 'Which "best" partition should be printed (affects also the error matrix)?',
                                                value = 1,
                                                min = 1,
                                                step = 1,
@@ -634,6 +636,15 @@ ui <- fluidPage(
                                                    icon = icon(name = "download",
                                                                lib = "font-awesome")
                                                    ),
+                                    conditionalPanel(
+                                      condition = 'input.blckmdlngPrespecifiedYN==true',
+                                      withTags(i('After processing the data it will be possible to download the custom blockmodel')),  
+                                      downloadButton(outputId = 'downloadCustomBlck',
+                                                       label = 'Download custom blockmodel',
+                                                       icon = icon(name = "download",
+                                                                   lib = "font-awesome")
+                                                       ),
+                                      ),
                                   ),
 
                                  p(
@@ -697,6 +708,9 @@ ui <- fluidPage(
                            tabPanel(title = "Image matrix",
                                     tableOutput("TableIM")
                                     ),
+                           tabPanel(title = "Error matrix",
+                                    tableOutput("TableEM")
+                           ),
                            ),
                          ), # mainPanel
                        ), # Sidebar layout
@@ -705,36 +719,44 @@ ui <- fluidPage(
             # 6. Show the Adjacency Matrix ####
             # "adjOptType","adj","adjPlot"
             tabPanel(title = "Adjacency matrix",
-                     hr(),
-                     fluidRow(
-                       column(3,
-                              # 6.1 Select network ####
-                              withTags(i("Select matrix")),
-                              radioButtons(inputId = "adjSelector",
-                                           label = "Which matrix do you want to use?",
-                                           choiceNames = c("original","partitioned"),
-                                           choiceValues = c(1,2)
-                              ),
+                     sidebarLayout(
+                       sidebarPanel(width = 4,
+                                    # 6.1 Select network ####
+                                    withTags(h4(b("Select matrix"))),
+                                    radioButtons(inputId = "adjSelector",
+                                                 label = "Which matrix do you want to use?",
+                                                 choiceNames = c("original","partitioned"),
+                                                 choiceValues = c(1,2)
+                                    ),
+                                    ## 6.2 Select type of output ####
+                                    conditionalPanel(
+                                      condition = "input.adjSelector == 1",
+                                             withTags(h4(b("Select output"))),
+                                             radioButtons(inputId = "adjOptType",
+                                                          label = "Type of visualisation",
+                                                          choiceNames = c("table","plot"),
+                                                          choiceValues = c("t","p")
+                                                          ),
+                                      ),
+                                    withTags(h4(b("Export adjacency matrix"))),
+                                    ## 6.3 Download adjacency matrix ####
+                                    downloadButton(outputId = "downloadAdj",
+                                                   label = 'Download',
+                                                   icon = icon(name = "download",
+                                                               lib = "font-awesome")
+                                    ),
+                                    ),
+                       mainPanel(
+                         ## 6.3 Table output original matrix ####
+                         tableOutput("adj"),
+                         ## 6.4 Plot output original matrix ####
+                         plotOutput(outputId = "adjPlot"),
                        ),
-                       conditionalPanel(
-                         ## 6.2 Select type of output ####
-                         condition = "input.adjSelector == 1",
-                       column(4, offset = 1,
-                              ### 6.2.1 Select type of output for the original partition ####
-                              withTags(i("Select output")),
-                              radioButtons(inputId = "adjOptType",
-                                           label = "Type of visualisation",
-                                           choiceNames = c("table","plot"),
-                                           choiceValues = c("t","p")
-                                           ),
-                              ),
-                       ),
-                       ),
-                     ## 6.3 Table output original matrix ####
-                     tableOutput("adj"),
-                     ## 6.4 Plot output original matrix ####
-                     plotOutput(outputId = "adjPlot"),
-                     ),
+                       ), #</Sidebarlayout>
+                     
+                       
+                     
+                     ), # Tabpanel
             
             tabPanel(title = "Network Plot",
                      # 7 Various sys of network plots ####
@@ -911,10 +933,11 @@ ui <- fluidPage(
                                            ),
                                ### 8.4.2 Color of the node's frame ####
                                ### "PlotVertexFrameColour"
-                               textInput(inputId = "PlotVertexFrameColour",
+                               selectInput(inputId = "PlotVertexFrameColour",
                                          label = 'Color of the nodes\' frame',
-                                         value = "black"
-                                         ),
+                                         choices = palette.colors(palette = palette.pals()[16]),
+                                         selected = '#3283FE'
+                               ),
                                
                                #### 8.4.3 Shape ###
                                #### "PlotVertexShape"
@@ -959,10 +982,11 @@ ui <- fluidPage(
                                            ),
                                ### 8.4.7 Colour of the node's labels ####
                                ### "PlotVertexLabelColour"
-                               textInput(inputId = "PlotVertexLabelColour",
+                               selectInput(inputId = "PlotVertexLabelColour",
                                          label = 'Color of the  nodes\' labels',
-                                         value = "black"
-                                         ),
+                                         choices = palette.colors(palette = palette.pals()[13]),
+                                         selected = '#BAB0AC'
+                               ),
                                ),
                         column(4, offset = 1,
                                h4("Edges"),
@@ -971,7 +995,7 @@ ui <- fluidPage(
                                
                               ### 8.4.8 Edges width (manual/valued) ####
                                checkboxInput(inputId = "igraphPlotEdgeWidthValues",
-                                             label = 'Edges\' width shows the network\'s values*',
+                                             label = 'Edges\' width shows the network\'s values',
                                              value = FALSE
                                ),
                                conditionalPanel(
@@ -1001,11 +1025,23 @@ ui <- fluidPage(
                                ),
 
                                ### 8.4.9 Colour of the edge ####
-                               ### "PlotEdgeColour"
-                               textInput(inputId = "PlotEdgeColour",
-                                         label = 'Color of the plot\'s edges',
-                                         value = "darkgrey"
-                               ),
+                               ### "PlotEdgeColour", 'igraphPlotEdgeShadeValues'
+                              
+                              checkboxInput(inputId = "igraphPlotEdgeShadeValues",
+                                            label = 'Edges\' colour shows the network\'s values',
+                                            value = FALSE
+                              ),
+                              
+                              conditionalPanel(
+                                condition ="input.igraphPlotEdgeShadeValues == false",
+                                selectInput(inputId = "PlotEdgeColour",
+                                          label = 'Color of the plot\'s edges',
+                                          choices = palette.colors(palette = palette.pals()[13]),
+                                          selected = '#BAB0AC'
+                                ),
+                                ),
+                              
+                              
                                conditionalPanel(
                                  condition = "input.directionality == true",
                                  ### 8.4.10 Arrows ####
@@ -1082,10 +1118,11 @@ ui <- fluidPage(
                                # ),
                                ### 8.4.15 Color of the edges' labels ####
                                ### "PlotEdgeLabelColour"
-                               textInput(inputId = "PlotEdgeLabelColour",
+                              selectInput(inputId = "PlotEdgeLabelColour",
                                          label = 'Colot of the plot\'s edges',
-                                         value = "black"
-                               ),
+                                         choices = palette.colors(palette = palette.pals()[13]),
+                                         selected = '#BAB0AC'
+                              ),
                         ),
                         column(4,
                                h4("Aesthetic option"),
@@ -1111,9 +1148,10 @@ ui <- fluidPage(
                                    condition = 'input.AttrVertexColYN==false',
                                    #### 8.4.1 (A) Color of the node without partitions ####
                                    #### "PlotVertexColour"
-                                   textInput(inputId = "PlotVertexColour",
+                                   selectInput(inputId = "PlotVertexColour",
                                              label = 'Color of the plot\'s nodes',
-                                             value = "SkyBlue2"
+                                             choices = palette.colors(palette = palette.pals()[16]),
+                                             selected = '#3283FE'
                                    ),
                                  ),
                                  ),
@@ -1191,9 +1229,10 @@ ui <- fluidPage(
                                ),
                                ### 8.5.3 Color background ####
                                ### "visBackground"
-                               textInput(inputId = "visBackground",
+                               selectInput(inputId = "visBackground",
                                          label = 'Color of the plot\'s background',
-                                         value = "papayawhip"
+                                         choices = c('peach'='#FBB4AE','pastel light blue'='#B3CDE3','pastel  green'='#CCEBC5','pastel purple'='#DECBE4','pastel orange'='#FED9A6','pastel yellow'='#FFFFCC','pastel brown'='#E5D8BD','pastel pink'='#FDDAEC','pastel grey'='#F2F2F2','white'='#FFFFFF'),
+                                         selected = '#FFFFFF'
                                ),
                         ),
                         column(4, offset = 1,
@@ -1223,10 +1262,45 @@ ui <- fluidPage(
                                ),
                         ),
                         column(4,
+                               h4("Aestetics"),
+                               
+                               withTags(h5(b("Nodes"))),
+                               ### 8.5.5 Nodes' colours ####
+                               conditionalPanel(
+                                 condition = "input.PlotSelector==1",
+                                 conditionalPanel(
+                                   condition = "input.AddAttr==true",
+                                   checkboxInput(inputId = 'visNetworkAttrVertexColYN',
+                                                 label = 'Colour nodes from attribute',
+                                                 value = F),
+                                 ),
+                                 conditionalPanel(
+                                   condition = 'input.visNetworkAttrVertexColYN==false',
+                                   #### "visNetworkNodeColour"
+                                   selectInput(inputId = "visNetworkNodeColour",
+                                             label = 'Color of the plot\'s nodes',
+                                             choices = palette.colors(palette = palette.pals()[16]),
+                                             selected = '#3283FE'
+                                   ),
+                                   #### "visNetworkNodeBorder"
+                                   selectInput(inputId = "visNetworkNodeBorder",
+                                             label = 'Color of the nodes\' border',
+                                             choices = palette.colors(palette = palette.pals()[13]),
+                                             selected = '#BAB0AC'
+                                   ),
+                                 ),
+                               ),
+                               conditionalPanel(
+                                 condition = "input.PlotSelector==1&&input.visNetworkAttrVertexColYN==true",
+                                 selectInput(inputId = 'visNetworkAttrPalette',
+                                             label = 'Select palette* for nodes\' colour',
+                                             choices = palette.pals(),
+                                             selected = palette.pals()[2],
+                                             multiple = F
+                                 ),
+                               ),
                                conditionalPanel(
                                  condition = 'input.PlotSelector==2',
-                                 h4("Aestetics"),
-                                 ### 8.5.4 Nodes' colours ####
                                  ### 'PlotPaletteVIS'
                                  selectInput(inputId = 'PlotPaletteVIS',
                                              label = 'Select palette for clusters\' colour',
@@ -1242,34 +1316,74 @@ ui <- fluidPage(
                                  withTags(div(b("26 colours"),':',i("Alphabet"))),
                                  withTags(p(b("36 colours"),':',i("Polychrome 36"))),
                                  ),
+                               
+                               
+                               ### 8.5.6 Nodes' shape
+                               selectInput(inputId = 'visNetworkNodeShape',
+                                           label = 'Shape',
+                                           choices = c('Square'="square", 'Triangle'="triangle",
+                                                       'Box'="box", 'Circle'="circle", 'Dot'="dot",
+                                                       'Star'="star", 'Ellipse'="ellipse", 'Database'="database",
+                                                       'Diamond'="diamond"),
+                                           selected = 'circle',
+                                           multiple = F),
+                               
+                               ### 8.5.6 Nodes' size
+                               ### "visNetworkNodeSize"
+                               sliderInput(inputId = "visNetworkNodeSize",
+                                           ticks = TRUE,
+                                           label = 'Dimension of plot\'s nodes',
+                                           value = 5,
+                                           min = .5,
+                                           max = 20,
+                                           step = .5
+                                           ),
+                               ### 8.5.6 Nodes' shadow
+                               ### 'visNetworkNodeShadow'
+                               checkboxInput(inputId = 'visNetworkNodeShadow',
+                                             label = 'Draw a shadow?',
+                                             value = T),
+                               conditionalPanel(
+                                 condition = 'input.visNetworkNodeShadow==true',
+                                 ### 'visNetworkNodeShadowSize'
+                                 sliderInput(inputId = "visNetworkNodeShadowSize",
+                                             ticks = TRUE,
+                                             label = 'Dimension of nodes\' shadows',
+                                             value = 5,
+                                             min = .5,
+                                             max = 20,
+                                             step = .5
+                                             ),
+                                 ),
+                               
+                               
+                               withTags(h5(b("Edges"))),
+                               
+                               ### 8.5.7 Edges' colour
+                               ### "visNetworkEdgeColour"
+                               textInput(inputId = "visNetworkEdgeColour",
+                                         label = 'Color of the plot\'s edges',
+                                         value = "SkyBlue"
+                               ),
+                               
+                               ### 8.5.7 Edges' highlight colour
+                               ### "visNetworkEdgeHighlight"
+                               textInput(inputId = "visNetworkEdgeHighlight",
+                                         label = 'Color of the higlighted edge',
+                                         value = "yellow"
+                               ),
+                               
+                               ### 8.5.8 Edges' shadow
+                               ### 'visNetworkNodeShadow'
+                               checkboxInput(inputId = 'visNetworkEdgeShadow',
+                                             label = 'Draw a shadow?',
+                                             value = T),
+                               
                                ),
                         ),
                       )# Conditional panel3
                     ), # Tab panel4
             ),# Tabset panel
-
-  # 9. Footer with HTML/CSS #### 
-  withTags(
-    div(class="footer1",
-        div(class="footer3",
-            br(),
-            p("Realised for the University of Ljubljana - FDV"),
-            h6("v. 1.7.4 - ",
-               i("The Block"),
-               ),
-        ), # footer3
-        div(class="footer2",
-            p(
-              a(
-                img(src="https://licensebuttons.net/l/by-nc-sa/3.0/88x31.png"),
-                href="https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode",
-                target="_blank"),
-              "Fabio Ashtar Telarico 2022 \u2001",
-              ),
-        )# footer2
-        
-    ) # footer1
-  ),
     )# ui
 
 # §2 Output ####
@@ -1277,10 +1391,11 @@ server <- function(input, output, session) {
   
   # 0. Reactive values ####
   Tbl<-reactiveValues(Current = NULL,Rows=NULL,Cols=NULL)
-  Blck<-reactiveValues(RunAlready = FALSE)
+  Blck<-reactiveValues(RunAlready = FALSE,Custom=NULL)
   
+  # 0.1 Reset 'Blck$RunAlready' if it becomes NULL
   observeEvent(eventExpr = c(Blck$RunAlready),handlerExpr = {
-    YN<<-Blck$RunAlready
+    YN<-Blck$RunAlready
     if(is.null(YN)){
       Blck$RunAlready<<-FALSE
     }
@@ -1450,7 +1565,7 @@ server <- function(input, output, session) {
   # 3. Get adjacency matrix ####
   # Converts edge lists and incidence matrices in adjacency matrix
   
-  GetAdjacenctMatrix<-eventReactive(ReadData(),{
+  GetAdjacencyMatrix<-eventReactive(ReadData(),{
     ## 3.1 data from file ####
       
       ### Determine type of file provided
@@ -1514,7 +1629,7 @@ server <- function(input, output, session) {
         dat<-mdllng()
         output<-plot(dat,main="")
       } else {
-        dat<-GetAdjacenctMatrix()
+        dat<-GetAdjacencyMatrix()
         dat<<-dat
         ## Plots the original matrix
         output<-plotMat(x = dat,ylab = '',xlab = '',plot.legend = F,
@@ -1535,11 +1650,11 @@ server <- function(input, output, session) {
       ## 5.3 Prints original adjacency matrix ####
         
         ## Load the matrix
-        dat<-GetAdjacenctMatrix()
+        dat<-GetAdjacencyMatrix()
         
         ## Plots the original matrix
-        output<-plotMat(x = dat,ylab = NULL,xlab = NULL,plot.legend = F,
-                main = NULL,title.line = NULL)
+        output<-plotMat(x = dat,ylab = '',xlab = '',plot.legend = F,
+                main = '',title.line = '')
     }
     output
   },height = 600,width = 800,res = 128)
@@ -1553,7 +1668,7 @@ server <- function(input, output, session) {
     if(input$adjSelector==2) return(NULL)
       
     ## 6.2 Reads matrix ####
-    dat<-GetAdjacenctMatrix()
+    dat<-GetAdjacencyMatrix()
     
     ## 6.3 Prints the matrix ####
     dat
@@ -1626,7 +1741,7 @@ server <- function(input, output, session) {
           }
           
           dat2<-
-            igraph::graph.adjacency(adjmatrix = GetAdjacenctMatrix(),
+            igraph::graph.adjacency(adjmatrix = GetAdjacencyMatrix(),
                                     weighted = iGraphValued,
                                     mode = iGraphDir,
                                     add.rownames = TRUE
@@ -1675,17 +1790,38 @@ server <- function(input, output, session) {
           igraphPlotEdgeWidth <- input$igraphPlotEdgeMaxWidth/MaxTemp*temp
         }
         
-        ### 7.2.2 Setting arrows ####
+        ### 7.2.2 Arrow setting ####
         if(input$OverrideigraphPlotArrows){
-          #### 7.3.2 (A) Overriding arrows ####
+          #### Overriding arrows
           if(input$igraphPlotArrow==FALSE) igraphPlotArrow <- 0
           if(input$igraphPlotArrow==TRUE) igraphPlotArrow <- 2
         } else {
-          #### 7.3.2 (B) Default settings ####
+          #### Default settings
           if(input$directionality==FALSE) igraphPlotArrow <- 0
           if(input$directionality==TRUE) igraphPlotArrow <- 2
         }
         
+        ### 7.2.1 Edges shade (manual/valued) ####
+        # Checks if the user show the edges' values as
+        # a shade of the colour of the network's edges
+        if(input$igraphPlotEdgeShadeValues==FALSE){
+          igraphPlotEdgeColour <- input$PlotEdgeColour
+        } else {
+          # Prepare the final vector
+          igraphPlotEdgeColour <- E(dat2)$weight
+          # Extract unique weights values
+          WhichWeights <- unique(igraphPlotEdgeColour)
+          # Determine ratio min/max
+          FairestGrey<-min(WhichWeights)/max(WhichWeights)
+          # Create adequate greyscale
+          greys <- grey.colors(n = length(WhichWeights),
+                               start = 1-FairestGrey,
+                               end = 0)
+          # Extendd grey scale to the whole series of weights
+          for(i in 1:length(WhichWeights)){
+            igraphPlotEdgeColour[E(dat2)$weight==WhichWeights[i]]<-greys[i]
+          }
+        }
         
         if (input$PlotSys==2) {
           # If the user selected igraph
@@ -1702,7 +1838,7 @@ server <- function(input, output, session) {
                               vertex.label.cex = input$PlotVertexLabelSize,
                               vertex.label.dist = input$PlotVertexLabelDist,
                               vertex.label.color = input$PlotVertexLabelColour,
-                              edge.color = input$PlotEdgeColour,
+                              edge.color = igraphPlotEdgeColour,
                               edge.width = igraphPlotEdgeWidth,
                               edge.arrow.mode = igraphPlotArrow,
                               edge.arrow.size = input$igraphPlotArrowSize,
@@ -1720,7 +1856,7 @@ server <- function(input, output, session) {
         } # else of if PlotSystem == 1
     },height = 800,width = 600,res = 128)
   
-  ## 7.2.3 Warning for short palette
+  ## 7.3 Warning for short palette
   warningGraph<-eventReactive(input$PlotPaletteGraph,{
     if(length(palette.colors(palette = input$PlotPaletteGraph))<length(unique(clu(res = mdllng())))){
       wrn<-paste('Select a palette supporting at least', length(unique(clu(res = mdllng()))), 'colours!')
@@ -1732,7 +1868,7 @@ server <- function(input, output, session) {
     wrn
   })
   
-  # 8. Plotting with VisNetwork
+  # 8. Plotting with VisNetwork ####
   output$igraphPlot<-renderVisNetwork({
     if(input$PlotSys==3){
       ## If the user selected VisNetwork
@@ -1744,6 +1880,7 @@ server <- function(input, output, session) {
         } else {
           iGraphDir<-'undirected'
         }
+        
         if(input$ValuedMatrix){
           iGraphValued<-TRUE
         } else {
@@ -1751,7 +1888,7 @@ server <- function(input, output, session) {
         }
         
         dat2<-
-          igraph::graph.adjacency(adjmatrix = GetAdjacenctMatrix(),
+          igraph::graph.adjacency(adjmatrix = GetAdjacencyMatrix(),
                                   weighted = iGraphValued,
                                   mode = iGraphDir,
                                   add.rownames = TRUE
@@ -1763,7 +1900,7 @@ server <- function(input, output, session) {
           V(dat2)$Added.Attr<-AddAttrVal[[1]]
         }
         
-        ### 7.3.3 With or without partitions?
+        ### 8.1 With or without partitions? ####
         if(input$PlotSelector==2){
           V(dat2)$cluster<-clu(res = mdllng())
           # Assigns colours to each partition
@@ -1774,9 +1911,9 @@ server <- function(input, output, session) {
           
           V(dat2)$color <- NodesColours[V(dat2)$cluster]
           
-        } else if(input$AttrVertexColYN){
+        } else if(input$visNetworkAttrVertexColYN){
           NodesColours <- palette.colors(n = length(unique(V(dat2)$Added.Attr)),
-                                         palette = input$PlotPaletteVIS)
+                                         palette = input$visNetworkAttrPalette)
           for(i in 1:length(unique(V(dat2)$Added.Attr))){
             V(dat2)$Added.Attr<-gsub(pattern = unique(V(dat2)$Added.Attr)[i],
                                      replacement = i, x = V(dat2)$Added.Attr)
@@ -1784,45 +1921,39 @@ server <- function(input, output, session) {
           
           V(dat2)$color <- NodesColours[as.numeric(V(dat2)$Added.Attr)]
         } else {
-          V(dat2)$color <- input$PlotVertexColour
+          V(dat2)$color <- input$visNetworkNodeColour
         }
       }
       
       ## Converts to visNetwork
       dat3<-toVisNetworkData(dat2)
+      dat3<<-dat3
       
       ## adds correct labels
       dat3$nodes$label<-dat3$nodes$name
       
-      if(input$visHier){
-        
-        ## 8.1 Hierarchical networks ####
-        ## Checks preference for hierarchical networks and outputs
-        
-        visNetwork(nodes = dat3$nodes, edges = dat3$edges,
-                   main = input$visTitle,
-                   submain = input$visSubtitle,
-                   background=input$visBackground)%>%
-          visOptions(nodesIdSelection = F,,
-                     height = 600,width = 800,
-                     manipulation = T)%>%
-          visHierarchicalLayout(direction = input$visHierDirection,
-                                parentCentralization = input$visHierCentralisation)
-      } else {
-        
-        ## 8.2 Non-hierarchical networks ####
-        
-        visNetwork(nodes = dat3$nodes, edges = dat3$edges,
-                   main = input$visTitle,
-                   submain = input$visSubtitle,
-                   background=input$visBackground)%>%
-          visOptions(nodesIdSelection = F,
-                     height = 600,width = 800)
-      }
+      visNetwork(nodes = dat3$nodes, edges = dat3$edges,
+                 main = input$visTitle,
+                 submain = input$visSubtitle,
+                 background=input$visBackground)%>%
+        visOptions(nodesIdSelection = F,,
+                   height = 600,width = 800,
+                   manipulation = F)%>%
+        visNodes(shape = input$visNetworkNodeShape,
+                 size = input$visNetworkNodeSize,
+                 color = list(border = input$visNetworkNodeBorder),
+                 shadow = list(enabled = input$visNetworkNodeShadow,
+                               size = input$visNetworkNodeShadowSize))%>%
+        visEdges(shadow = input$visNetworkEdgeShadow,
+                 color = list(color = input$visNetworkEdgeColour,
+                              highlight = input$visNetworkEdgeHighlight))%>%
+        visHierarchicalLayout(enabled = input$visHier, direction = input$visHierDirection,
+                              parentCentralization = input$visHierCentralisation)
+      
     }
   })
   
-  ## 8.3 Warning for short palette
+  ## 8.4 Warning for short palette
   warningVIS<-eventReactive(input$PlotPaletteVIS,{
     if(length(palette.colors(palette = input$PlotPaletteVIS))<length(unique(clu(res = mdllng())))){
       wrn<-paste('Select a palette supporting at least', length(unique(clu(res = mdllng()))), 'colours!')
@@ -1852,7 +1983,7 @@ server <- function(input, output, session) {
       blck<-readRDS(file = UploadedResults$datapath)
     } else {
       ## Loads data
-      M<-GetAdjacenctMatrix()
+      M<-GetAdjacencyMatrix()
       
       ## 9.2 Checks if the M parameter should be considered ####
       ## "paramM"
@@ -2002,6 +2133,8 @@ server <- function(input, output, session) {
                          color = "#978E83",
                          text = 'Computing clusters, please wait...')
       
+      Blck$Custom<<-BlockTypes
+      
       ## 9.5 Executes blockmodeling ####
       blck<-
         optRandomParC(M = M,
@@ -2120,8 +2253,16 @@ server <- function(input, output, session) {
   
   ### 10.4.2 Renders image matrix as tables ####
   output$TableIM<- renderTable({
-    
     IM()
+  },colnames = T,rownames = T,striped = T,hover = T,bordered = T,
+  spacing = "s",width = "auto",align = "c",digits = 0,quoted = F)
+  
+  ### 10.5 Renders error matrix as a table ####
+  output$TableEM<- renderTable({
+        EM_Table<-EM(res = mdllng(),
+                     which = input$whichIM)
+        colnames(EM_Table)<-1:ncol(EM_Table)
+        EM_Table
   },colnames = T,rownames = T,striped = T,hover = T,bordered = T,
   spacing = "s",width = "auto",align = "c",digits = 0,quoted = F)
   
@@ -2323,6 +2464,26 @@ server <- function(input, output, session) {
       TblCurrent
     },selection = list(mode="multiple",target='cell',selectable=matrix(c(-1:-nrow(Tbl$Current),rep(0,nrow(Tbl$Current))),ncol = 2)),
     options = list(paging =FALSE, searching=FALSE,ordering=FALSE),style='bootstrap4')
+  
+  # 20. Download adjacency matrix ####
+  output$downloadAdj<-
+    downloadHandler(
+      filename = "Adjacency Matrix.txt",
+      content = function(file) {
+        write.table(x = GetAdjacencyMatrix(),
+                    file = file)
+      },
+      contentType = 'text/csv'
+    )
+  
+  # 21. Download custom blockmodel ####
+  output$downloadCustomBlck<-
+    downloadHandler(
+      filename = "Pre-specified Blockmodel.RDS",
+      content = function(file) {
+        saveRDS(object = Blck$Custom,file = file)
+      }
+    )
   
 }
 
