@@ -418,15 +418,6 @@ ui <- fluidPage(
                                                 label = 'Should the parallel computation be used?',
                                                 value = FALSE
                                                 ),
-                                  ### 5.1.11 Which best partition to print ####
-                                  ### "whichIM"
-                                  condition = "input.blckmdlngAll==true",
-                                  numericInput(inputId = "whichIM",
-                                               label = 'Which "best" partition should be printed (affects also the error matrix)?',
-                                               value = 1,
-                                               min = 1,
-                                               step = 1,
-                                  ),
                                   ), # Column 4 
                            ), # Col layout
                          ), # Sidebar panel
@@ -585,7 +576,6 @@ ui <- fluidPage(
                              ),
                          
                          fluidRow(
-                           column(4,p('')),
                            column(4,
                              ### 5.1.13 (A) Start blockmodeling ####
                              # "blckmdlngRun"
@@ -597,7 +587,19 @@ ui <- fluidPage(
                                                       lib = "font-awesome")
                                           ),
                            ),
-                           column(4,p(''))
+                           column(4,p('')),
+                           column(4,
+                                  ### 5.1.13(B) Which best partition to print ####
+                                  ### "whichIM"
+                                  condition = "input.blckmdlngAll==true",
+                                  numericInput(inputId = "whichIM",
+                                               label = 'Which "best" partition should be printed?',
+                                               value = 1,
+                                               min = 1,
+                                               step = 1,
+                                               ),
+                                  withTags(i('Affects also error matrix and mean matrix')),
+                                  ),
                          ),
                          hr(),
                          
@@ -608,7 +610,7 @@ ui <- fluidPage(
                                   ### 5.1.14 Load blockmodeling results from RDS ####
                                   ### "blckmdlngRDS", "blckmdlngFileRDS"
 
-                                  #### Upload results as RDS file ####
+                                  #### Upload results as RDS file
                                   conditionalPanel(
                                     condition = 'input.blckmdlngRDS==true',
                                     fileInput(inputId = "blckmdlngFileRDS",
@@ -711,6 +713,9 @@ ui <- fluidPage(
                            tabPanel(title = "Error matrix",
                                     tableOutput("TableEM")
                            ),
+                           tabPanel(title = "Mean matrix",
+                                    tableOutput("TableMean")
+                           ),
                            ),
                          ), # mainPanel
                        ), # Sidebar layout
@@ -737,19 +742,39 @@ ui <- fluidPage(
                                                           choiceNames = c("table","plot"),
                                                           choiceValues = c("t","p")
                                                           ),
+                                      conditionalPanel(
+                                        condition = "input.adjOptType == 't'",
+                                        withTags(h4(b("Export adjacency matrix"))),
+                                        ## 6.4 Download adjacency matrix ####
+                                        downloadButton(outputId = "downloadAdj",
+                                                       label = 'Download',
+                                                       icon = icon(name = "download",
+                                                                   lib = "font-awesome")
+                                                       ),
+                                        ), # /input.adjOptType
+                                      ), # /input.adjSelector
+                                    
+                                    ### 6.3 Which best partition to print ####
+                                    ### "whichIM_adjPlot"
+                                    conditionalPanel(
+                                      condition = "input.blckmdlngAll==true",
+                                      conditionalPanel(
+                                        condition = 'input.adjSelector==2',
+                                        numericInput(inputId = "whichIM_adjPlot",
+                                                     label = 'Which "best" partition should be printed?',
+                                                     value = 1,
+                                                     min = 1,
+                                                     step = 1,
+                                                     ),
+                                        ),
                                       ),
-                                    withTags(h4(b("Export adjacency matrix"))),
-                                    ## 6.3 Download adjacency matrix ####
-                                    downloadButton(outputId = "downloadAdj",
-                                                   label = 'Download',
-                                                   icon = icon(name = "download",
-                                                               lib = "font-awesome")
-                                    ),
+                                    
+                                    
                                     ),
                        mainPanel(
                          ## 6.3 Table output original matrix ####
                          tableOutput("adj"),
-                         ## 6.4 Plot output original matrix ####
+                         ## 6.4 Output plot-matrix ####
                          plotOutput(outputId = "adjPlot"),
                        ),
                        ), #</Sidebarlayout>
@@ -793,7 +818,7 @@ ui <- fluidPage(
                        ),
                        ## 8.2 Select plotting sys ####
                        ## "PlotSys"
-                       column(4, offset = 1,
+                       column(3,
                               withTags(i("Select output")),
                               radioButtons(inputId = "PlotSys",
                                            label = "Which package to use for plotting?",
@@ -803,7 +828,20 @@ ui <- fluidPage(
                                            selected = 2
                               ),
                          ),
-                     ),
+                       column(3,
+                       conditionalPanel(
+                         condition = 'input.PlotSelector==2',
+                         ### 8.3 Which best partition to print ####
+                         ### "whichIM_Plot"
+                         numericInput(inputId = "whichIM_Plot",
+                                      label = 'Which "best" partition should be used for plotting?',
+                                      value = 1,
+                                      min = 1,
+                                      step = 1,
+                                      ),
+                         ), # /conditionalPanel
+                       ), # /column
+                     ), # /fluidRow
       
                      ## 8.3 Options for the "network" plotting sys ####
                      conditionalPanel(
@@ -850,9 +888,10 @@ ui <- fluidPage(
                                 #### 8.3.4 (A) Whether to override arrows ####
                                 # "OverridePlotArrows"
                                 checkboxInput(inputId = "OverridePlotArrows",
-                                              label = 'Ovveride default arrow settings?',
+                                              label = 'Override default arrows*',
                                               value = FALSE
                                 ),
+                                withTags(p('*',i('By default arrows are shown for directional networks'))),
                                 conditionalPanel(
                                   condition ="input.OverridePlotArrows == true",
                                 #### 8.3.4 (B) Overriding plot arrows
@@ -883,16 +922,26 @@ ui <- fluidPage(
                                   )
                                 )
                               ),
-                              ### 8.3.5 Label size ####
-                              ### "PlotLabelSize"
-                              sliderInput(inputId = "PlotLabelSize",
-                                          ticks = TRUE,
-                                          label = 'Dimension of plot\'s labels',
-                                          value = 1,
-                                          min = .5,
-                                          max = 20,
-                                          step = .5
-                              ),
+                              ### 8.3.5 Node Labels ####
+                              #### 8.3.5 (A) Hide labels
+                              #### 'NetworkNodeLabelsHide'
+                              withTags(h5(b('Hide the nodes\' labels'))),
+                              checkboxInput(inputId = 'NetworkNodeLabelsHide',
+                                            label = 'Check to hide',
+                                            value = T),
+                              conditionalPanel(
+                                condition = 'input.NetworkNodeLabelsHide==false',
+                                #### 8.3.5 (B) Labels' size
+                                #### "PlotLabelSize"
+                                sliderInput(inputId = "PlotLabelSize",
+                                            ticks = TRUE,
+                                            label = 'Dimension of plot\'s labels',
+                                            value = 1,
+                                            min = .5,
+                                            max = 20,
+                                            step = .5
+                                            ),
+                                ),
                               
                               ### 8.3.6 Nodes size ####
                               ### "PlotNodeSize"
@@ -953,40 +1002,53 @@ ui <- fluidPage(
                                            selected = 'cicle',
                                            multiple = F
                                ),
-                               ### 8.4.4 Font Family of the nodes' labels ####
-                               ### "PlotVertexLabelFontFamily"
-                               radioButtons(inputId = "PlotVertexLabelFontFamily",
-                                            label = "Node labels' font",
-                                            choices = c("Serif"="serif","Sans serif"="sans"),
-                                            inline = TRUE
-                                            ),
-                               ### 8.4.5 Size of the node's labels ####
-                               ### "PlotVertexLabelSize"
-                               sliderInput(inputId = "PlotVertexLabelSize",
-                                           ticks = TRUE,
-                                           label = 'Dimension of node\'s labels',
-                                           value = 1,
-                                           min = .5,
-                                           max = 20,
-                                           step = .5
-                                           ),
-                               ### 8.4.6 Size of the node's labels ####
-                               ### "PlotVertexLabelDist"
-                               sliderInput(inputId = "PlotVertexLabelDist",
-                                           ticks = TRUE,
-                                           label = 'Labels\' distance from the node',
-                                           value = 0.5,
-                                           min = .5,
-                                           max = 3,
-                                           step = .5
-                                           ),
-                               ### 8.4.7 Colour of the node's labels ####
-                               ### "PlotVertexLabelColour"
-                               selectInput(inputId = "PlotVertexLabelColour",
-                                         label = 'Color of the  nodes\' labels',
-                                         choices = palette.colors(palette = palette.pals()[13]),
-                                         selected = '#BAB0AC'
-                               ),
+                               ### 8.4.4 Hide the nodes' labels
+                               #### 'GraphNodeLabelsHide'
+                               withTags(h5(b('Hide the nodes\' labels'))),
+                               checkboxInput(inputId = 'GraphNodeLabelsHide',
+                                             label = 'Check to hide',
+                                             value = T),
+                                             
+                               conditionalPanel(
+                                 condition = 'input.GraphNodeLabelsHide==false',
+                                 ### 8.4.5 Font Family of the nodes' labels ####
+                                 ### "PlotVertexLabelFontFamily"
+                                 radioButtons(inputId = "PlotVertexLabelFontFamily",
+                                              label = "Node labels' font",
+                                              choices = c("Serif"="serif","Sans serif"="sans"),
+                                              inline = TRUE
+                                 ),
+                                 
+                                 ### 8.4.6 Size of the node's labels ####
+                                 ### "PlotVertexLabelSize"
+                                 sliderInput(inputId = "PlotVertexLabelSize",
+                                             ticks = TRUE,
+                                             label = 'Dimension of node\'s labels',
+                                             value = 1,
+                                             min = .5,
+                                             max = 20,
+                                             step = .5
+                                 ),
+                                 
+                                 ### 8.4.7 Distance of the node's labels ####
+                                 ### "PlotVertexLabelDist"
+                                 sliderInput(inputId = "PlotVertexLabelDist",
+                                             ticks = TRUE,
+                                             label = 'Labels\' distance from the node',
+                                             value = 0.5,
+                                             min = .5,
+                                             max = 3,
+                                             step = .5
+                                 ),
+                                 ### 8.4.8 Colour of the node's labels ####
+                                 ### "PlotVertexLabelColour"
+                                 selectInput(inputId = "PlotVertexLabelColour",
+                                             label = 'Color of the  nodes\' labels',
+                                             choices = palette.colors(palette = palette.pals()[13]),
+                                             selected = '#BAB0AC'
+                                             ),
+                                 ),
+                               
                                ),
                         column(4, offset = 1,
                                h4("Edges"),
@@ -1627,7 +1689,7 @@ server <- function(input, output, session) {
       ## Loads blockmodeling's result
       if(Blck$RunAlready==TRUE){
         dat<-mdllng()
-        output<-plot(dat,main="")
+        output<-plot(dat,main="",which = input$whichIM_adjPlot)
       } else {
         dat<-GetAdjacencyMatrix()
         dat<<-dat
@@ -1687,7 +1749,7 @@ server <- function(input, output, session) {
       if(input$PlotSelector==2){
         ## Reads data in
         dat<-NW()
-        clu<-blockmodeling::clu(res=mdllng())
+        clu<-blockmodeling::clu(res=mdllng(),which = input$whichIM_Plot)
         dat<-
           network::set.vertex.attribute(x = dat,
                                         attrname = "cluster",
@@ -1711,9 +1773,9 @@ server <- function(input, output, session) {
         VertexCol<-2
       }
       
-      ### Plotting
+     ### Plotting
       network::plot.network(x = dat,
-                            usearrows = input$PlotArrows,
+                            usearrows = PlotArrows,
                             mode = input$PlotMode,
                             displayisolates = input$PlotIsolate,
                             # interactive = PlotInteractive,
@@ -1721,7 +1783,8 @@ server <- function(input, output, session) {
                             label.cex = input$PlotLabelSize,
                             vertex.cex = input$PlotNodeSize,
                             vertex.col= VertexCol,
-                            label=network.vertex.names(dat)
+                            label=network.vertex.names(dat),
+                            displaylabels= input$NetworkNodeLabelsHide
       )
       
       } else {
@@ -1755,7 +1818,7 @@ server <- function(input, output, session) {
           
           ### 7.3.3 With or without partitions?
           if(input$PlotSelector==2){
-            V(dat2)$cluster<-clu(res = mdllng())
+            V(dat2)$cluster<-clu(res = mdllng(),which = input$whichIM_Plot)
             # Assigns colours to each partition
             
             NodesColours <-
@@ -1823,13 +1886,20 @@ server <- function(input, output, session) {
           }
         }
         
+        ### 7.2.3 Checks if the user wants to hide the nodes' labels
+        if(input$GraphNodeLabelsHide){
+          iGraphLabels<-NA
+        } else {
+          iGraphLabels<-V(dat2)$name
+        }
+        
         if (input$PlotSys==2) {
           # If the user selected igraph
 
           
           ### Plots igraph
           igraph::plot.igraph(x = dat2,
-                              vertex.label= V(dat2)$name,
+                              vertex.label= iGraphLabels,
                               vertex.size = input$PlotVertexSize,
                               # vertex.color= ,
                               vertex.frame.color = input$PlotVertexFrameColour,
@@ -1858,8 +1928,8 @@ server <- function(input, output, session) {
   
   ## 7.3 Warning for short palette
   warningGraph<-eventReactive(input$PlotPaletteGraph,{
-    if(length(palette.colors(palette = input$PlotPaletteGraph))<length(unique(clu(res = mdllng())))){
-      wrn<-paste('Select a palette supporting at least', length(unique(clu(res = mdllng()))), 'colours!')
+    if(length(palette.colors(palette = input$PlotPaletteGraph))<length(unique(clu(res = mdllng(),which = input$whichIM_Plot)))){
+      wrn<-paste('Select a palette supporting at least', length(unique(clu(res = mdllng(),which = input$whichIM_Plot))), 'colours!')
     } else {wrn<-NULL}
     return(wrn)
   })
@@ -1902,7 +1972,7 @@ server <- function(input, output, session) {
         
         ### 8.1 With or without partitions? ####
         if(input$PlotSelector==2){
-          V(dat2)$cluster<-clu(res = mdllng())
+          V(dat2)$cluster<-clu(res = mdllng(),which = input$whichIM_Plot)
           # Assigns colours to each partition
           
           NodesColours <-
@@ -1955,8 +2025,8 @@ server <- function(input, output, session) {
   
   ## 8.4 Warning for short palette
   warningVIS<-eventReactive(input$PlotPaletteVIS,{
-    if(length(palette.colors(palette = input$PlotPaletteVIS))<length(unique(clu(res = mdllng())))){
-      wrn<-paste('Select a palette supporting at least', length(unique(clu(res = mdllng()))), 'colours!')
+    if(length(palette.colors(palette = input$PlotPaletteVIS))<length(unique(clu(res = mdllng(),which = input$whichIM_Plot)))){
+      wrn<-paste('Select a palette supporting at least', length(unique(clu(res = mdllng(),which = input$whichIM_Plot))), 'colours!')
     } else {wrn<-NULL}
     return(wrn)
   })
@@ -2158,7 +2228,7 @@ server <- function(input, output, session) {
       remove_modal_spinner()
       
       ## Remember that the blockmodel was run
-      # Blck$RunAlready<<-TRUE
+      Blck$RunAlready<<-TRUE
       
       # Notification "Blockmodeling completed"
       showNotification(ui = "Blockmodeling completed",
@@ -2266,6 +2336,16 @@ server <- function(input, output, session) {
   },colnames = T,rownames = T,striped = T,hover = T,bordered = T,
   spacing = "s",width = "auto",align = "c",digits = 0,quoted = F)
   
+  ### 10.6 Rendex mean matrix as a table ####
+  output$TableMean<- renderTable({
+    Mean_Table<-blockmodeling::funByBlocks(x = mdllng(),
+                                           which=input$whichIM,
+                                           FUN='mean',na.rm=T)
+    colnames(Mean_Table)<-1:ncol(Mean_Table)
+    Mean_Table
+  },colnames = T,rownames = T,striped = T,hover = T,bordered = T,
+  spacing = "s",width = "auto",align = "c",digits = 0,quoted = F)
+  
   # 11. Download blockmodeling results to file ####
   output$DownloadBlckRDS <- downloadHandler(
     filename = "Blockmodeling results.RDS",
@@ -2278,7 +2358,7 @@ server <- function(input, output, session) {
   output$DownloadClu <- downloadHandler(
     filename = "partitions.clu",
     content = function(file) {
-      blockmodeling::savevector(v = clu(res = mdllng()),
+      blockmodeling::savevector(v = clu(res = mdllng(),which = input$whichIM),
                                 filename = file)
       }
     )
