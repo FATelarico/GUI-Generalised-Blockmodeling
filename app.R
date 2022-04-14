@@ -2006,7 +2006,7 @@ server <- function(input, output, session) {
                  main = input$visTitle,
                  submain = input$visSubtitle,
                  background=input$visBackground)%>%
-        visOptions(nodesIdSelection = F,,
+        visOptions(nodesIdSelection = T,
                    height = 600,width = 800,
                    manipulation = F)%>%
         visNodes(shape = input$visNetworkNodeShape,
@@ -2403,6 +2403,7 @@ server <- function(input, output, session) {
           ## 13.1 Reading RDS file ####
           UploadedFile<-input$PrespecifiedArrayRDS
           Layers<-readRDS(file = UploadedFile$datapath)
+          Layers<<-Layers
         } else if(input$ArrayInput==".RData"){
           ## 13.2 Reading RData file ####
           UploadedFile<-input$PrespecifiedArrayRData
@@ -2412,21 +2413,38 @@ server <- function(input, output, session) {
         }
         
         ## 13.3 Unmaking array ####
-        
-        ## Preparing data frame
-        UnmakingArray<-matrix(NA,nrow = dim(Layers)[4],ncol = dim(Layers)[3])
-        colnames(UnmakingArray)<-1:ncol(UnmakingArray)
-        
-        # Filling  by column ...
-        for(i in 1:nrow(UnmakingArray)){
-          # ... then by row
-          for(j in 1:ncol(UnmakingArray)){
-            # if the specific cell contains less block types than the max
-            # the cell, the extra layers are filled with NAs
-            UnmakingArray[i,j]<-paste(unlist(strsplit(Layers[,1,i,j],split = ",")),collapse = ",")
+        if(length(dim(Layers))==4){
+          ## Preparing data frame
+          UnmakingArray<-matrix(NA,nrow = dim(Layers)[3],ncol = dim(Layers)[4])
+          colnames(UnmakingArray)<-1:ncol(UnmakingArray)
+          
+          # Filling  by column ...
+          for(i in 1:nrow(UnmakingArray)){
+            # ... then by row
+            for(j in 1:ncol(UnmakingArray)){
+              # if the specific cell contains less block types than the max
+              # the cell, the extra layers are filled with NAs
+              UnmakingArray[i,j]<-paste(unlist(strsplit(Layers[,1,i,j],split = ",")),collapse = ",")
+            }
           }
+          Tbl$Current<<-UnmakingArray
+        } else if(length(dim(Layers))==2){
+          ## Preparing data frame
+          UnmakingArray<-matrix(NA,nrow = dim(Layers)[1],ncol = dim(Layers)[2])
+          colnames(UnmakingArray)<-1:ncol(UnmakingArray)
+          
+          # Filling  by column ...
+          for(i in 1:nrow(UnmakingArray)){
+            # ... then by row
+            for(j in 1:ncol(UnmakingArray)){
+              # if the specific cell contains less block types than the max
+              # the cell, the extra layers are filled with NAs
+              UnmakingArray[i,j]<-paste(unlist(strsplit(Layers[i,j],split = ",")),collapse = ",")
+            }
+          }
+          Tbl$Current<<-UnmakingArray
         }
-        Tbl$Current<<-UnmakingArray
+        
       }
     })
   
