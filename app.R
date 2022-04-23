@@ -20,9 +20,9 @@ library(visNetwork)
 library(DT)
 library(shinybusy)
 
-
-# §1 Inputs ####
+# Sect. 1 Inputs ####
 ui <- fluidPage(
+  
   includeCSS("./style.css"), # CSS Styles
   theme = shinytheme("united"),
   tags$head(
@@ -35,7 +35,7 @@ ui <- fluidPage(
 
 
 
-    # 0. Decorations with HTML/CSS ####
+    ## 0. Decorations with HTML/CSS ####
     titlePanel({
       withTags({
         div(class="Header",
@@ -79,19 +79,19 @@ ui <- fluidPage(
             tabPanel(title = "Data upload",
                      fluidRow(
                        column(3,
-                              # 1. File-upload options ####
+                              ## 1. File-upload options ####
                               # "FileInputOpt1"
                               withTags({
                                 div(h4(b("File-upload options")))
                               }),
-                              ## 1.1 Use a sample ####
+                              ### 1.1 Use a sample ####
                               ### "Sample" 
                               checkboxInput(inputId = "Sample",
                                             label = 'Use a sample',
                                             value = F),
                               conditionalPanel(
                                 condition = "input.Sample == false",
-                                ## 1.2 Select type of input ####
+                                ### 1.2 Select type of input ####
                                 ## "type"
                                 selectInput(inputId = "type",
                                             label = "Type of data?",
@@ -101,7 +101,7 @@ ui <- fluidPage(
                                 ),
                                 conditionalPanel(
                                   condition = "input.type != 4",
-                                  ### 1.2.1 Upload list ####
+                                  #### 1.2.1 Upload list ####
                                   ### "List"
                                   fileInput(inputId = "List",
                                             label = "Upload the selected list as a plain-text file",
@@ -110,7 +110,7 @@ ui <- fluidPage(
                                             buttonLabel = "Browse",
                                             placeholder = "Your list here"),
                                   
-                                  ### 1.2.2 Headers edge list file ####
+                                  #### 1.2.2 Headers edge list file ####
                                   ### "ListHeader"
                                   checkboxInput(inputId = "ListHeader",
                                                 label = 'Headers?',
@@ -120,12 +120,12 @@ ui <- fluidPage(
                                 )
                               ),
                        column(4,offset = 1,
-                              # 2. Customise file elaboration ####
+                              ## 2. Customise file elaboration ####
                               # "FileInputOpt2"
                               withTags({
                                 div(h4(b("Customise file elaboration")))
                               }),
-                              ## 2.1 Separator ####
+                              ### 2.1 Separator ####
                               ## "sep"
                               radioButtons(inputId = "sep",
                                            label = "Separator",
@@ -134,7 +134,7 @@ ui <- fluidPage(
                               ),
                               conditionalPanel(
                                 condition = "input.sep == 'Other'",
-                                ### 2.1.1 Other separator ####
+                                #### 2.1.1 Other separator ####
                                 ### "OtherSep"
                                 textAreaInput(inputId = "OtherSep",
                                               label = 'You selected "other", please indicate the right separator',
@@ -142,14 +142,14 @@ ui <- fluidPage(
                                               value = "",
                                 ),
                               ),
-                              ## 2.2 Trim blanks ####
+                              ### 2.2 Trim blanks ####
                               ## "whites"
                               checkboxInput(inputId = "whites",
                                             label = 'Trim extra blanks',
                                             value = TRUE),
                               conditionalPanel(
                                 condition = "input.type == 4",
-                                ## 2.3 Type of Pajek file ####
+                                ### 2.3 Type of Pajek file ####
                                 ## "PajekInput"
                                 radioButtons(inputId = "PajekInput",
                                              label = "Type of Pajek file",
@@ -157,7 +157,7 @@ ui <- fluidPage(
                                              choiceNames = c(".mat",".net"),
                                              choiceValues = c("PajekMatrix","PajekNetwork")
                                 ),
-                                ## 2.4 Upload Pajek file ####
+                                ### 2.4 Upload Pajek file ####
                                 ## "PajekFile"
                                 fileInput(inputId = "PajekFile",
                                           label = "Upload a Pajek file",
@@ -169,19 +169,19 @@ ui <- fluidPage(
                               ), # if input.type == 4
                               ), # columnt 3 
                      column(4,
-                            #3. Specify network properties ####
+                            ## 3. Specify network properties ####
                             # "NetworkOpt"
                             withTags({
                               div(h4(b("Specify network properties")))
                             }),
                             
-                            ## 3.1 Values/Weights ####
+                            ### 3.1 Values/Weights ####
                             ## "ValuedMatrix"
                             checkboxInput(inputId = "ValuedMatrix",
                                           label = 'Valued/Weighted network',
                                           value = TRUE,
                             ),
-                            ### 3.1.1 Values/Weights name ####
+                            #### 3.1.1 Values/Weights name ####
                             # "ValuesName"
                             # conditionalPanel(
                             #   condition = "input.ValuedMatrix == true",
@@ -245,11 +245,11 @@ ui <- fluidPage(
                                               lib = "font-awesome")
                      )
                      ),# Fluid row
-                     # 4. Show the network's summary ####
+                     ## 4. Show the network's summary ####
                      # "summary"
                      verbatimTextOutput("summary"),
                      
-                     ## 4.1  Summary with adj ####
+                     ### 4.1  Summary with adj ####
                      ## "NetworkSummaryOpt"
                      withTags({
                        div(h4(b("An extra option")))
@@ -263,22 +263,20 @@ ui <- fluidPage(
                      ),
                      ), # Tab panel Data
             tabPanel(title = "Generalised blockmodeling",
-                     # 5. blockmodeling
+                     ## 5. Block-modeling ####
                      sidebarLayout(
-                       sidebarPanel(
-                         ## 5.1 blockmodeling options ####
-                         ## "blckmdlngOpt"
-                         withTags({
-                           div(h4(b("Customise blockmodeling")))
-                         }),
-                         hr(),
-                         fluidRow(
-                           column(6,
-                                  
-                                  ### 5.1.1 blockmodeling approach ####
+                       sidebarPanel(width = 12,
+                                    withTags({
+                                      div(h3(b("Customise blockmodeling")))
+                                      }),
+                                    hr(),
+                                    fluidRow(
+                                      column(4,
+                                             ### 5.1 Approaches ####
+                                             withTags(h4(b('Approaches'))),
                                   ### "blckmdlngApproach"
                                   selectInput(inputId = "blckmdlngApproach",
-                                              label = "Approach?",
+                                              label = "Select approach",
                                               choices = c("Binary"="bin",
                                                            "Valued"="val",
                                                            "Sum of squares homogeneity"="ss",
@@ -286,7 +284,7 @@ ui <- fluidPage(
                                               multiple=FALSE
                                   ),
                                   
-                                  #### 5.1.1 (A) M parameter for valued blockmodeling ####
+                                  #### 5.1.1 M parameter for valued blockmodeling ####
                                   #### "ParamM"
                                   conditionalPanel(
                                     condition ="input.blckmdlngApproach == 'val'",
@@ -298,7 +296,7 @@ ui <- fluidPage(
                                     )
                                   ),
                                   
-                                  #### 5.1.1 (B) Threshold parameter for binary blockmodeling ####
+                                  #### 5.1.2 Threshold parameter for binary blockmodeling ####
                                   #### "ParamThreshold", "ThresholdSelected"
                                   conditionalPanel(
                                     condition ="input.blckmdlngApproach == 'bin'",
@@ -319,20 +317,30 @@ ui <- fluidPage(
                                     
                                   ),
                                   
+                                  hr(),
                                   
-                                  ### 5.1.2 Types of of allowed blocktypes ####
+                                  ### 5.2 Block types ####
+                                  withTags(h4(b('Block types'))),
                                   
-                                  #### 5.1.2 (A) Pre-specified? ####
-                                  #### "blckmdlngPrespecifiedYN"
-                                  checkboxInput(inputId = "blckmdlngPrespecifiedYN",
-                                                label = 'Pre-specify the allowed blocktypes?',
+                                  #### 5.2.1 Show/Hide Block-types weights' menu ####
+                                  #### 'blockTypeWeights_Show'
+                                  checkboxInput(inputId = 'blockTypeWeights_Show',
+                                                label = 'Show/Hide block-types weights\' menu',
+                                                value = F),
+                                  
+                                  #### 5.2.2 Types of of allowed blocktypes ####
+                                  
+                                  ##### 5.2.2 (A) Pre-specified - Menu ####
+                                  #### "blckmdlngPrespecified_Show"
+                                  checkboxInput(inputId = "blckmdlngPrespecified_Show",
+                                                label = 'Show/Hide menu to pre-specify the allowed blocktypes',
                                                 value = FALSE
                                   ),
                                   
-                                  #### 5.1.2 (B) Non pre-specified ####
+                                  ##### 5.2.2 (B) Non pre-specified ####
                                   #### "blckmdlngBlockTypes"
                                   conditionalPanel(
-                                    condition = 'input.blckmdlngPrespecifiedYN == false',
+                                    condition = 'input.blckmdlngPrespecified_Switch == false',
                                     selectInput(inputId = "blckmdlngBlockTypes",
                                                 label = "Allowed blocktypes",
                                                 choices = c("null or empty block"="nul",
@@ -350,8 +358,8 @@ ui <- fluidPage(
                                                 selected = c("nul","com"),
                                                 multiple = TRUE
                                     ), 
-                                    
-                                    ### 5.1.3 Number of clusters ####
+                                  
+                                    #### 5.2.2 (C) Number of clusters (non pre-specified) ####
                                     ### "blckmdlngNumClusters"
                                     numericInput(inputId = "blckmdlngNumClusters",
                                                  label = 'How many clusters to use in the generation of partitions?',
@@ -359,44 +367,22 @@ ui <- fluidPage(
                                                  min = 1,
                                                  step = 1
                                                  ),
-                                    ), # Conditional blckmdlngPrespecifiedYN
-                                  ### 5.1.4 Number of repetitions ####
-                                  ### "blckmdlngRepetitions"
+                                    ), # Conditional blckmdlngPrespecified_Switch
+                           ),
+                           column(4,
+                                  ### 5.3 Other options ####
+                                  withTags(h4(b('Other options'))),
+                                  withTags(h4('Computation')),
+                                  #### 5.3.1 Number of repetitions ####
+                                  #### "blckmdlngRepetitions"
                                   numericInput(inputId = "blckmdlngRepetitions",
                                                label = 'How many repetitions/different starting partitions to check?',
                                                value = 2,
                                                min = 1,
                                                step = 1
                                                ),
-                                  ### 5.1.5 Saving initial parameters ####
-                                  withTags(i("Saving the additional parameters can take up more memory, but also preserve precious information")),
-                                  ### "blckmdlngInitialParams"
-                                  checkboxInput(inputId = "blckmdlngInitialParams",
-                                                label = 'Should the initial parameters be saved?',
-                                                value = TRUE
-                                                ),
-                                  ),
-                           column(6,
                                   
-                                  ### 5.1.6 Number of results to save ####
-                                  ### "blckmdlngMaxSavedResults"
-                                  numericInput(inputId = "blckmdlngMaxSavedResults",
-                                               label = 'How many results to save?',
-                                               value = 10,
-                                               min = 1,
-                                               step = 10
-                                  ),
-                                  
-                                  
-                                  ### 5.1.7 Returning  all ####
-                                  ### "blckmdlngAll"
-                                  checkboxInput(inputId = "blckmdlngAll",
-                                                label = 'Should solution be shown for all partitions (not only the best one)?*',
-                                                value = TRUE
-                                  ),
-                                  withTags(i("Disable for very complex calculation and/or low-end machines")),
-                                  
-                                  ### 5.1.8 Random Seed ####
+                                  #### 5.3.2 Random Seed ####
                                   ### "blckmdlngRandomSeed"
                                   numericInput(inputId = "blckmdlngRandomSeed",
                                                label = 'Insert a random seed to use it',
@@ -405,180 +391,246 @@ ui <- fluidPage(
                                                step = 1
                                   ),
                                   
-                                  ### 5.1.9 Printing extra info ####
-                                  ### "blckmdlngPrintRep"
-                                  checkboxInput(inputId = "blckmdlngPrintRep",
-                                                label = 'Should some information about each optimization be printed?',
-                                                value = TRUE
-                                  ),
-                                  
-                                  ### 5.1.10 Multi-corep processing ####
-                                  ### "MultiCore"
+                                  #### 5.3.3 Multi-core processing ####
+                                  #### "MultiCore"
                                   checkboxInput(inputId = "MultiCore",
                                                 label = 'Should the parallel computation be used?',
                                                 value = FALSE
+                                  ),
+                                  
+                                  
+                                  ),
+                           column(4,
+                                  withTags(h4('Results')),
+                                  
+                                  #### 5.3.4 Restore-memory max size
+                                  numericInput(inputId = 'Restore_MaxMemory',
+                                               label = 'Results to store in buffer memory',
+                                               value = 3,
+                                               min = 1,
+                                               max = 10,
+                                               step = 1),
+
+                                  #### 5.3.5 Number of results to save ####
+                                  #### "blckmdlngMaxSavedResults"
+                                  numericInput(inputId = "blckmdlngMaxSavedResults",
+                                               label = 'How many results to save?',
+                                               value = 10,
+                                               min = 1,
+                                               step = 10),
+
+                                  #### 5.3.6 Saving initial parameters ####
+                                  withTags(i("Saving the additional parameters can take up more memory, but also preserve precious information")),
+                                  #### "blckmdlngInitialParams"
+                                  checkboxInput(inputId = "blckmdlngInitialParams",
+                                                label = 'Should the initial parameters be saved?',
+                                                value = TRUE),
+
+                                  #### 5.3.6 Returning  all ####
+                                  #### "blckmdlngAll"
+                                  checkboxInput(inputId = "blckmdlngAll",
+                                                label = 'Should solution be shown for all partitions (not only the best one)?*',
+                                                value = TRUE),
+
+                                  withTags(i("Disable for very complex calculation and/or low-end machines")),
+
+                                  #### 5.3.7 Printing extra info ####
+                                  #### "blckmdlngPrintRep"
+                                  checkboxInput(inputId = "blckmdlngPrintRep",
+                                                label = 'Should some information about each optimization be printed?',
+                                                value = TRUE),
+                                  ), # Column 4
+                           ), # / Col layout
+                         ), # / Sidebar panel
+                       mainPanel(width=12,
+                                 
+                                 ### 5.4  Set block-types weights - Menu ####
+                                 conditionalPanel(
+                                   condition = 'input.blockTypeWeights_Show==true',
+                                   sidebarPanel(width = 12,
+                                                ### 'blockTypeWeights_Switch',
+                                                checkboxInput(inputId = 'blockTypeWeights_Switch',
+                                                              label = 'Use block-type weights',
+                                                              value = F),
+                                                
+                                                  withTags(h4(b('Set custom block-types\' weights'))),
+                                                  fluidRow(
+                                                    ### 'blockTypeWeights_com', 'blockTypeWeights_nul'
+                                                    column(4,
+                                                           numericInput(inputId = 'blockTypeWeights_com',
+                                                                        label = 'Complete',value = 1,min = 0),
+                                                           numericInput(inputId = 'blockTypeWeights_nul',
+                                                                        label = 'Null',value = 1,min = 0),
+                                                    ),
+                                                    ### 'blockTypeWeights_rre','blockTypeWeights_cre'
+                                                    column(4,
+                                                           numericInput(inputId = 'blockTypeWeights_rre',
+                                                                        label = 'Row-regular',value = 1,min = 0),
+                                                           numericInput(inputId = 'blockTypeWeights_cre',
+                                                                        label = 'Column-regular',value = 1,min = 0),
+                                                    ),
+                                                    ### 'blockTypeWeights_dnc', 'blockTypeWeights_reg'
+                                                    column(4,
+                                                           numericInput(inputId = 'blockTypeWeights_dnc',
+                                                                        label = '"Do not care"',value = 1,min = 0),
+                                                           numericInput(inputId = 'blockTypeWeights_reg',
+                                                                        label = 'f-Regular',value = 1,min = 0),
+                                                    ),# /column
+                                                  ), # /fluidRow
+                                                ), # /sidebarPanel
+                                 ), # / Conditional Panel Show
+                                 
+                                 ### 5.5 Pre-specified block types ####
+                                 conditionalPanel(
+                                   condition = 'input.blckmdlngPrespecified_Show == true',
+                                   sidebarLayout(
+                                     sidebarPanel(
+                                       # width = 12,
+                                       
+                                       ##### 5.5.1  Pre-specified switch ####
+                                       #### "blckmdlngPrespecified_Switch"
+                                       withTags(h5(b('Check the box to use the block model'))),
+                                       checkboxInput(inputId = "blckmdlngPrespecified_Switch",
+                                                     label = 'Use pre-specified blocktypes?',
+                                                     value = FALSE),
+                                       withTags(i('Even if the menu is hidden, your choice is remembered')),
+                                       
+                                       #### 5.5.2 DT table options ####
+                                      
+                                       fluidRow(
+                                         column(width = 6,
+                                                ##### 5.5.2 (A) Clusters' size ####
+                                                ##### 'CustoomBlockModel_NumberCluster'
+                                                numericInput(inputId = "CustoomBlockModel_NumberCluster",
+                                                             label = 'Number of cluster',
+                                                             value = 3,
+                                                             min = 2,
+                                                             step = 1),
+                                                actionButton(inputId = 'SetSizeDT',
+                                                             label = 'Confirm',
+                                                             icon = icon(name = "window-maximize",
+                                                                         lib = "font-awesome")
                                                 ),
-                                  ), # Column 4 
-                           ), # Col layout
-                         ), # Sidebar panel
-                       mainPanel(
-                         sidebarLayout(
-                           
-                             ### 5.1.12 Pre-specified block types ####
-                             conditionalPanel(
-                               condition = 'input.blckmdlngPrespecifiedYN == true',
-                               sidebarPanel(
-                                 width = 12,
-                                 # checkboxInput(inputId = "ManualPrespecified",
-                                 #               label = 'Pre-specify custom blockmodeling parameters manually?',
-                                 #               value = TRUE
-                                 #               ),
-                                 
-                                   
-                                     # tableOutput(outputId = 'CustomBlockModel'),
-                                     DT::dataTableOutput(outputId = 'CustomBlockModel',width = '100%'),
-                                     fluidRow(
-                                       column(width = 3,
-                                              hr(),
-                                              ),
-                                       column(width = 4,
-                                              actionButton(inputId = 'ResetSelectionDT',
-                                                           label = 'Reset selection',
-                                                           icon = icon(name = 'recycle',
-                                                                       lib = "font-awesome")),
-                                              ),
-                                       column(width = 3,
-                                              actionButton(inputId = 'SelectAllDT',
-                                                           label = 'Select all',
-                                                           icon = icon(name = 'check',
-                                                                       lib = "font-awesome")),
-                                              ),
-                                       column(width = 2,
-                                              hr(),
-                                              ),
-                                                  ), # fluidrow
-                                   
-                                   #### 5.1.12(A) Hot table and inputs ####
-                                 # conditionalPanel(
-                                 #   condition = 'input.ManualPrespecified == true',
-                                   hr(),
-                                   fluidRow(
-                                     column(width = 6,
-                                            ##### Clusters' size ####
-                                            ##### 'CustoomBlockModel_NumberCluster'
-                                            numericInput(inputId = "CustoomBlockModel_NumberCluster",
-                                                         label = 'Number of cluster',
-                                                         value = 3,
-                                                         min = 2,
-                                                         step = 1),
-                                            actionButton(inputId = 'SetSizeDT',
-                                                         label = 'Confirm',
-                                                         icon = icon(name = "window-maximize",
-                                                                     lib = "font-awesome")
-                                            ),
-          
-                                     ), # column
-                                     column(width = 6,
-                                            ##### Block types ####
-                                            ##### 'TowardsDT'
-                                            selectInput(inputId = "TowardsDT",
-                                                        label = "Select the allowed blocktypes",
-                                                        choices = c("null or empty"="nul",
-                                                                    "complete"="com",
-                                                                    # "row-dominant (binary and valued approach only)"="rdo",
-                                                                    # "column-dominant (binary and valued approach only)"="cdo",
-                                                                    "(f-)regular"="reg",
-                                                                    "row (f-)regular"="rre",
-                                                                    "column (f-)regular"= "cre",
-                                                                    # "row dominant (binary, valued only)"="rfn",
-                                                                    # "column dominant (binary, valued only)"= "cfn",
-                                                                    # "density (binary approach only)"="den",
-                                                                    # "average (valued approach only)"="avg",
-                                                                    "do not care (the error is always zero)"="dnc"),
-                                                        selected = c("nul","com"),
-                                                        multiple = TRUE
-                                            ),
-                                            actionButton(inputId = "LoadBlocksIntoDT",
-                                                         label = "Load blocks",
-                                                         icon = icon(name = "clone",
-                                                                     lib = "font-awesome")
-                                            ),
-                                     ),# End of column with inputs
-                                   ), # End of fluid row
-                                   #ManualPrespecified ), # End of Conditional panel 
-                                 
-                                 hr(),
-                                 
-                                 #### 5.1.12(C) File upload for pre-specified block-types' array
-                                 fluidRow(
-                                   column(width = 6,
-                                          # ###### Use a sample ####
-                                          # ###### "Sample" 
-                                          # checkboxInput(inputId = "SampleArray",
-                                          #               label = 'Use a sample',
-                                          #               value = F),
-                                          
-                                          # conditionalPanel(
-                                          #   condition = 'input.SampleArray == false',
-                                            ###### Type of uploaded array ####
-                                            # "ArrayInput"
-                                            radioButtons(inputId = "ArrayInput",
-                                                         label = "Type of file to upload?",
-                                                         selected = ".RDS",
-                                                         choiceValues = c(".RDS",".RData"),
-                                                         choiceNames = c("R Data Serialized","R Data"),
-                                                         inline = T
-                                            ),
-                                            
-                                            ###### Upload array as RDS file ####
-                                            conditionalPanel(
-                                              condition = 'input.ArrayInput==".RDS"',
-                                              fileInput(inputId = "PrespecifiedArrayRDS",
-                                                        label = "Upload a RDS file",
-                                                        multiple = F,
-                                                        buttonLabel = "Browse",
-                                                        placeholder = "Your R file here",
-                                                        accept = c(".RDS")
-                                              ),
-                                            ),# Conditional panel RDS
-                                            
-                                            ###### Upload array as RData file ####
-                                            conditionalPanel(
-                                              condition = 'input.ArrayInput==".RData"',
-                                              fileInput(inputId = "PrespecifiedArrayRData",
-                                                        label = "Upload a RData file",
-                                                        multiple = F,
-                                                        buttonLabel = "Browse",
-                                                        placeholder = "Your R file here",
-                                                        accept = c(".RData")
-                                                        ),
-                                              ), # Conditional panel RData
-                                            # ), # Conditional panel SampleArray
-                                          ), #Column
-                                   column(width = 6,
-                                          withTags(i("An array with four dimensions. The first is as long as the maximum number of allowed block types for a given block. The second dimension is the number of relations. The third and the fourth represent rows' and columns' clusters. For more information see", a(href="https://cran.r-project.org/web/packages/blockmodeling/blockmodeling.pdf#page=10",'here',target="_blank"))),
-                                          hr(),
-                                          actionButton(inputId = 'UploadArray',
-                                                       label = 'Load the array to see the block model',
-                                                       icon = icon(name = 'upload',
-                                                                   lib = 'font-awesome')
-                                                      ),
-                                          checkboxInput(inputId = 'EditUploadedArray',
-                                                        label = 'Ignore the uploaded array',
-                                                         value = F
-                                                        ),
-                                          withTags(h5('Only turn on',i('after'),'loading a block model from file')),
-                                          ),
+                                                
+                                         ), # column
+                                         column(width = 6,
+                                                ##### 5.5.2 (B) Block types ####
+                                                ##### 'TowardsDT'
+                                                selectInput(inputId = "TowardsDT",
+                                                            label = "Select the allowed blocktypes",
+                                                            choices = c("null or empty"="nul",
+                                                                        "complete"="com",
+                                                                        # "row-dominant (binary and valued approach only)"="rdo",
+                                                                        # "column-dominant (binary and valued approach only)"="cdo",
+                                                                        "(f-)regular"="reg",
+                                                                        "row (f-)regular"="rre",
+                                                                        "column (f-)regular"= "cre",
+                                                                        # "row dominant (binary, valued only)"="rfn",
+                                                                        # "column dominant (binary, valued only)"= "cfn",
+                                                                        # "density (binary approach only)"="den",
+                                                                        # "average (valued approach only)"="avg",
+                                                                        "do not care (the error is always zero)"="dnc"),
+                                                            selected = c("nul","com"),
+                                                            multiple = TRUE
+                                                ),
+                                                actionButton(inputId = "LoadBlocksIntoDT",
+                                                             label = "Load blocks",
+                                                             icon = icon(name = "clone",
+                                                                         lib = "font-awesome")
+                                                ),
+                                         ),# End of column with inputs
+                                       ), # End of fluid row
+                                       
+                                       
+                                       hr(),
+                                       
+                                       #### 5.5.3 File upload for pre-specified block-types' array ####
+                                       
+                                                ##### 5.5.3 (A) Type of uploaded array ####
+                                                # "ArrayInput"
+                                                radioButtons(inputId = "ArrayInput",
+                                                             label = "Type of file to upload?",
+                                                             selected = ".RDS",
+                                                             choiceValues = c(".RDS",".RData"),
+                                                             choiceNames = c("R Data Serialized","R Data"),
+                                                             inline = T
+                                                ),
+                                                
+                                                ##### 5.5.3 (B) Upload array as RDS file ####
+                                                conditionalPanel(
+                                                  condition = 'input.ArrayInput==".RDS"',
+                                                  fileInput(inputId = "PrespecifiedArrayRDS",
+                                                            label = "Upload a RDS file",
+                                                            multiple = F,
+                                                            buttonLabel = "Browse",
+                                                            placeholder = "Your R file here",
+                                                            accept = c(".RDS")
+                                                  ),
+                                                ),# Conditional panel RDS
+                                                
+                                                ##### 5.5.3 (C) Upload array as RData file ####
+                                                conditionalPanel(
+                                                  condition = 'input.ArrayInput==".RData"',
+                                                  fileInput(inputId = "PrespecifiedArrayRData",
+                                                            label = "Upload a RData file",
+                                                            multiple = F,
+                                                            buttonLabel = "Browse",
+                                                            placeholder = "Your R file here",
+                                                            accept = c(".RData")
+                                                  ),
+                                                ), # Conditional panel RData
+                                       withTags(i("An array with four dimensions. The first is as long as the maximum number of allowed block types for a given block. The second dimension is the number of relations. The third and the fourth represent rows' and columns' clusters. For more information see", a(href="https://cran.r-project.org/web/packages/blockmodeling/blockmodeling.pdf#page=10",'here',target="_blank"))),
+                                       
+                                       ##### 5.5.3 (D) Button to upload the array
+                                       ##### 'UploadArray'
+                                       hr(),
+                                       actionButton(inputId = 'UploadArray',
+                                                    label = 'Load the array to see the block model',
+                                                    icon = icon(name = 'upload',
+                                                                lib = 'font-awesome')
+                                       ),
+                                       
+                                       ##### 5.5.3 (E) Switch to edit the uploaded  array
+                                       ##### 'EditUploadedArray'
+                                       checkboxInput(inputId = 'EditUploadedArray',
+                                                     label = 'Ignore the uploaded array',
+                                                     value = F
+                                       ),
+                                       withTags(h5('Only turn on',i('after'),'loading a block model from file')),
+                                       
+                                     ), # / Sidebar
+                                     mainPanel(
+                                       #### 5.5.4 DT Table ####
+                                       DT::dataTableOutput(outputId = 'CustomBlockModel',width = '100%'),
+                                       fluidRow(
+                                         column(width = 3,
+                                                hr(),
+                                         ),
+                                         column(width = 4,
+                                                actionButton(inputId = 'ResetSelectionDT',
+                                                             label = 'Reset selection',
+                                                             icon = icon(name = 'recycle',
+                                                                         lib = "font-awesome")),
+                                         ),
+                                         column(width = 3,
+                                                actionButton(inputId = 'SelectAllDT',
+                                                             label = 'Select all',
+                                                             icon = icon(name = 'check',
+                                                                         lib = "font-awesome")),
+                                         ),
+                                         column(width = 2,
+                                                withTags(p('')),
+                                         ),
+                                       ), # / fluidrow
+                                     ),
                                    ),
-                                 ),# conditional panel blckmdlngPrespecifiedYN==T
-                               ), # Sidebar
-                             mainPanel(width = 0),
-                             ),
+                                 ), # / conditional panel blckmdlngPrespecified_Show==T
+                                 
                          
                          fluidRow(
                            column(4,
-                             ### 5.1.13 (A) Start blockmodeling ####
-                             # "blckmdlngRun"
+                             ### 5.6 Start blockmodeling ####
+                             ### "blckmdlngRun"
                              withTags(h5(b("Start blockmodeling"))),
                              
                              actionButton(inputId = "blckmdlngRun",
@@ -587,9 +639,23 @@ ui <- fluidPage(
                                                       lib = "font-awesome")
                                           ),
                            ),
-                           column(4,p('')),
                            column(4,
-                                  ### 5.1.13(B) Which best partition to print ####
+                                  ### 5.7 Restore from memory ####
+                                  checkboxInput(inputId = 'Restore_Switch',
+                                                label = 'Check to restore previous results',
+                                                value = F),
+                                  conditionalPanel(
+                                    condition = 'input.Restore_Switch==true',
+                                    numericInput(inputId = 'Restore_Selector',
+                                                 label = 'Memory slot to restore',
+                                                 value = 1,min = 1,max = 10),
+                                    withTags(h5(style='color=#ff0000',
+                                                b(i('Press "Process data" to restore'))
+                                                )),
+                                    ),
+                                  ),
+                           column(4,
+                                  ### 5.8 Which best partition to print ####
                                   ### "whichIM"
                                   condition = "input.blckmdlngAll==true",
                                   numericInput(inputId = "whichIM",
@@ -601,37 +667,39 @@ ui <- fluidPage(
                                   withTags(i('Affects also error matrix and mean matrix')),
                                   ),
                          ),
-                         hr(),
                          
+                         hr(),
                          
                          fluidRow(
                            column(4,
+                                 
                                   withTags(h5(b("Upload results"))),
-                                  ### 5.1.14 Load blockmodeling results from RDS ####
+                                  checkboxInput(inputId = "blckmdlngRDS",
+                                                label = "Upload blockmodelling results",
+                                                value = F),
+                                  ### 5.9 Load blockmodeling results from RDS ####
                                   ### "blckmdlngRDS", "blckmdlngFileRDS"
 
                                   #### Upload results as RDS file
                                   conditionalPanel(
                                     condition = 'input.blckmdlngRDS==true',
                                     fileInput(inputId = "blckmdlngFileRDS",
-                                              label = "Upload a RDS file",
+                                              label = NULL,
                                               multiple = F,
                                               buttonLabel = "Browse",
-                                              placeholder = "Your R file here",
+                                              placeholder = "Your RDS file here",
                                               accept = c(".RDS")
                                     ),
                                     withTags(h5(i('Use the "Read Data" button under the "Data upload" tab to read the matrix from this file'))),
                                   ),# Conditional panel RDS
 
-                                  checkboxInput(inputId = "blckmdlngRDS",
-                                               label = "Upload blockmodelling results",
-                                               value = F),
+                           
 
                            ),
-                           column(8,
-                                  ### 5.1.15 Download blockmodeling RDS ####
+                           column(4,
+                                  ### 5.10 Download blockmodeling RDS ####
                                   ### "DownloadBlckRDS"
-                                  withTags(h5(b("Downloads"))),
+                                  withTags(h5(b("Download results"))),
                                   p(
                                     downloadButton(outputId = "DownloadBlckRDS",
                                                    label = "Download blockmodeling results",
@@ -639,7 +707,7 @@ ui <- fluidPage(
                                                                lib = "font-awesome")
                                                    ),
                                     conditionalPanel(
-                                      condition = 'input.blckmdlngPrespecifiedYN==true',
+                                      condition = 'input.blckmdlngPrespecified_Switch==true',
                                       withTags(i('After processing the data it will be possible to download the custom blockmodel')),  
                                       downloadButton(outputId = 'downloadCustomBlck',
                                                        label = 'Download custom blockmodel',
@@ -650,7 +718,7 @@ ui <- fluidPage(
                                   ),
 
                                  p(
-                                   ### 5.1.16 Download vector partitions ####
+                                   ### 5.11 Download vector partitions ####
                                    ### "DownloadClu"
                                    downloadButton(outputId = "DownloadClu",
                                                   label = "Download partitions as vector",
@@ -658,7 +726,10 @@ ui <- fluidPage(
                                                               lib = "font-awesome")
                                    ),
                                  ),
-                                  ### 5.1.17 Download image matrix ####
+                                 ), # / Col
+                           column(4,
+                                  withTags(h5(b("Other downloads"))),
+                                  ### 5.12 Download image matrix ####
                                   conditionalPanel(
                                     condition = "input.dropIM == true",
                                     p(
@@ -668,12 +739,12 @@ ui <- fluidPage(
                                                      inline=T,
                                                      icon = icon(name = "table",
                                                                  lib = "font-awesome")
-                                                     ),
-
+                                      ),
+                                      
                                     ),
-
+                                    
                                   ),
-                                 # "DownloadIMrds"
+                                  # "DownloadIMrds"
                                   p(
                                     downloadButton(outputId = "DownloadIMrds",
                                                    label = "Download image matrix as RDS",
@@ -688,15 +759,14 @@ ui <- fluidPage(
                                                 value = TRUE,
                                                 width = '100%'
                                   ),
-
-                           ) # Col 8
+                                  ),
                          ), # Col layout
                          
                          
                          
                          
-                         ## 5.2 Show the blockmodeling's summary ####
-                         # "Tableblckmdlng", "Summaryblckmdlng"
+                         ### 5.13 Show the blockmodeling's results ####
+                         ### "Tableblckmdlng", "Summaryblckmdlng"
                          withTags({
                            div(h4(b("Summary of blockmodeling results")))
                          }),
@@ -711,29 +781,46 @@ ui <- fluidPage(
                                     tableOutput("TableIM")
                                     ),
                            tabPanel(title = "Error matrix",
-                                    tableOutput("TableEM")
-                           ),
+                                    fluidRow(
+                                      column(4,tableOutput("TableEM")),
+                                      column(5, withTags(p(''))),
+                                      column(3,
+                                             numericInput(inputId = 'DigitsEM',
+                                                          label = 'How many digits to show?',
+                                                          value = 3,min = 0,step = 1),
+                                      ),
+                                    ),
+                                    ),
                            tabPanel(title = "Mean matrix",
-                                    tableOutput("TableMean")
+                                    fluidRow(
+                                      column(4,tableOutput("TableMean")),
+                                      column(5, withTags(p(''))),
+                                      column(3,
+                                             numericInput(inputId = 'DigitsMean',
+                                                          label = 'How many digits to show?',
+                                                          value = 3,min = 0,step = 1),
+                                      ),
+                                    ),
+                                    
                            ),
                            ),
                          ), # mainPanel
                        ), # Sidebar layout
                      ), # Tab panel2
           
-            # 6. Show the Adjacency Matrix ####
-            # "adjOptType","adj","adjPlot"
+            ## 6. Show the Adjacency Matrix ####
+            ## "adjOptType","adj","adjPlot"
             tabPanel(title = "Adjacency matrix",
                      sidebarLayout(
                        sidebarPanel(width = 4,
-                                    # 6.1 Select network ####
+                                    ### 6.1 Select network ####
                                     withTags(h4(b("Select matrix"))),
                                     radioButtons(inputId = "adjSelector",
                                                  label = "Which matrix do you want to use?",
                                                  choiceNames = c("original","partitioned"),
                                                  choiceValues = c(1,2)
                                     ),
-                                    ## 6.2 Select type of output ####
+                                    ### 6.2 Select type of output ####
                                     conditionalPanel(
                                       condition = "input.adjSelector == 1",
                                              withTags(h4(b("Select output"))),
@@ -745,7 +832,7 @@ ui <- fluidPage(
                                       conditionalPanel(
                                         condition = "input.adjOptType == 't'",
                                         withTags(h4(b("Export adjacency matrix"))),
-                                        ## 6.4 Download adjacency matrix ####
+                                        ### 6.4 Download adjacency matrix ####
                                         downloadButton(outputId = "downloadAdj",
                                                        label = 'Download',
                                                        icon = icon(name = "download",
@@ -769,12 +856,19 @@ ui <- fluidPage(
                                         ),
                                       ),
                                     
-                                    
+                                    ### 6.4 Margin size
+                                    ## 'MatrixPlotMargin'
+                                    numericInput(inputId = 'MatrixPlotMargin',
+                                                 label = 'Set the plot\'s margin',
+                                                 value = 1.6,
+                                                 min = 0,
+                                                 step = .1
+                                                 ),
                                     ),
                        mainPanel(
-                         ## 6.3 Table output original matrix ####
+                         ### 6.3 Table output original matrix ####
                          tableOutput("adj"),
-                         ## 6.4 Output plot-matrix ####
+                         ### 6.4 Output plot-matrix ####
                          plotOutput(outputId = "adjPlot"),
                        ),
                        ), #</Sidebarlayout>
@@ -784,21 +878,21 @@ ui <- fluidPage(
                      ), # Tabpanel
             
             tabPanel(title = "Network Plot",
-                     # 7 Various sys of network plots ####
+                     ## 7 Various sys of network plots ####
                      conditionalPanel(
-                       ## 7.1 "Network" and "igraph" sys ####
+                       ### 7.1 "Network" and "igraph" sys ####
                        condition = "input.PlotSys != 3",
                        plotOutput("NetworkPlot",
                                   height = 640,width = 800),
                       ),
                      conditionalPanel(
                        condition = "input.PlotSys == 3",
-                       ## 7.2 "visNetwork" sys ####
+                       ### 7.2 "visNetwork" sys ####
                        visNetworkOutput("igraphPlot",
                                         height = 640,width = 800),
                      ),
                      
-                     # 8. Plotting options####
+                     ## 8. Plotting options####
                      # "PlotOpt"
                      withTags({
                        div(h4(b("Plotting options")))
@@ -806,7 +900,7 @@ ui <- fluidPage(
  
                      hr(),
                      fluidRow(
-                       ## 8.1 Select matrix to plot ####
+                       ### 8.1 Select matrix to plot ####
                        ## "PlotSelector"
                        column(3,
                               withTags(i("Select network")),
@@ -816,7 +910,7 @@ ui <- fluidPage(
                                            choiceValues = c(1,2)
                               ),
                        ),
-                       ## 8.2 Select plotting sys ####
+                       ### 8.2 Select plotting sys ####
                        ## "PlotSys"
                        column(3,
                               withTags(i("Select output")),
@@ -831,7 +925,7 @@ ui <- fluidPage(
                        column(3,
                        conditionalPanel(
                          condition = 'input.PlotSelector==2',
-                         ### 8.3 Which best partition to print ####
+                         #### 8.2.1 Which best partition to print ####
                          ### "whichIM_Plot"
                          numericInput(inputId = "whichIM_Plot",
                                       label = 'Which "best" partition should be used for plotting?',
@@ -843,7 +937,7 @@ ui <- fluidPage(
                        ), # /column
                      ), # /fluidRow
       
-                     ## 8.3 Options for the "network" plotting sys ####
+                     ### 8.3 Options for the "network" plotting sys ####
                      conditionalPanel(
                        condition = "input.PlotSys == 1",
                        withTags({
@@ -854,7 +948,7 @@ ui <- fluidPage(
                     fluidRow(
                        column(3,
                               withTags(h5(b("General options"))),
-                              ## 8.3.1 Mode ####
+                              #### 8.3.1 Mode ####
                               ## "PlotMode"
                               radioButtons(inputId = "PlotMode",
                                            label = 'Nodes arrangement',
@@ -863,14 +957,14 @@ ui <- fluidPage(
                                            inline = TRUE
                                            ),
                               
-                              ### 8.3.2 Isolate ####
+                              #### 8.3.2 Isolate ####
                               ### "PlotIsolate"
                               checkboxInput(inputId = "PlotIsolate",
                                             label = 'Isolated nodes',
                                             value = TRUE
                               ),
                               
-                              ### 8.3.3 Interactive ####
+                              #### 8.3.3 Interactive ####
                               ### "PlotInteractive"
                               # checkboxInput(inputId = "PlotInteractive",
                               #               label = 'Should the plot be plot be interactive?*',
@@ -884,8 +978,8 @@ ui <- fluidPage(
                               h4("Aesthetic options"),
                               conditionalPanel(
                                 condition ="input.directionality == true",
-                                ### 8.3.4 Arrows ####
-                                #### 8.3.4 (A) Whether to override arrows ####
+                                #### 8.3.4 Arrows ####
+                                ##### 8.3.4 (A) Whether to override arrows ####
                                 # "OverridePlotArrows"
                                 checkboxInput(inputId = "OverridePlotArrows",
                                               label = 'Override default arrows*',
@@ -894,14 +988,14 @@ ui <- fluidPage(
                                 withTags(p('*',i('By default arrows are shown for directional networks'))),
                                 conditionalPanel(
                                   condition ="input.OverridePlotArrows == true",
-                                #### 8.3.4 (B) Overriding plot arrows
+                                ##### 8.3.4 (B) Overriding plot arrows
                                 #### "PlotArrows"
                                 checkboxInput(inputId = "PlotArrows",
                                               label = 'Display arrows',
                                               value = FALSE
                                               ),
                                 ),
-                                  #### 8.3.4 (C) Arrow size ####
+                                  ##### 8.3.4 (C) Arrow size ####
                                   #### "PlotArrowSize"
                                   sliderInput(inputId = "PlotArrowSize",
                                               ticks = TRUE,
@@ -912,7 +1006,7 @@ ui <- fluidPage(
                                               step = .5
                                               ),
                                 ),
-                              #### 8.3.4 (D) Message "No directionality, No arrows" ####
+                              ##### 8.3.4 (D) Message "No directionality, No arrows" ####
                               conditionalPanel(
                                 condition ="input.directionality == false",
                                 withTags( 
@@ -922,8 +1016,8 @@ ui <- fluidPage(
                                   )
                                 )
                               ),
-                              ### 8.3.5 Node Labels ####
-                              #### 8.3.5 (A) Hide labels
+                              #### 8.3.5 Node Labels ####
+                              ##### 8.3.5 (A) Hide labels
                               #### 'NetworkNodeLabelsHide'
                               withTags(h5(b('Hide the nodes\' labels'))),
                               checkboxInput(inputId = 'NetworkNodeLabelsHide',
@@ -931,7 +1025,7 @@ ui <- fluidPage(
                                             value = T),
                               conditionalPanel(
                                 condition = 'input.NetworkNodeLabelsHide==false',
-                                #### 8.3.5 (B) Labels' size
+                                ##### 8.3.5 (B) Labels' size
                                 #### "PlotLabelSize"
                                 sliderInput(inputId = "PlotLabelSize",
                                             ticks = TRUE,
@@ -943,7 +1037,7 @@ ui <- fluidPage(
                                             ),
                                 ),
                               
-                              ### 8.3.6 Nodes size ####
+                              #### 8.3.6 Nodes size ####
                               ### "PlotNodeSize"
                               sliderInput(inputId = "PlotNodeSize",
                                           ticks = TRUE,
@@ -958,7 +1052,7 @@ ui <- fluidPage(
                     ),# END Conditional panel1 : network Plotting Options"
                     conditionalPanel(
                       condition = "input.PlotSys == 2",
-                      ## 8.4 Options for the "igraph" plotting sys ####
+                      ### 8.4 Options for the "igraph" plotting sys ####
                       withTags({
                         h4(b("igraph Plotting Options"))
                       }),
@@ -970,7 +1064,7 @@ ui <- fluidPage(
                                withTags({
                                  h4("Vertex")
                                }),
-                               ### 8.4.1 Size of the node ####
+                               #### 8.4.1 Size of the node ####
                                ### "PlotVertexSize"
                                sliderInput(inputId = "PlotVertexSize",
                                            ticks = TRUE,
@@ -980,7 +1074,7 @@ ui <- fluidPage(
                                            max = 20,
                                            step = .5
                                            ),
-                               ### 8.4.2 Color of the node's frame ####
+                               #### 8.4.2 Color of the node's frame ####
                                ### "PlotVertexFrameColour"
                                selectInput(inputId = "PlotVertexFrameColour",
                                          label = 'Color of the nodes\' frame',
@@ -988,7 +1082,7 @@ ui <- fluidPage(
                                          selected = '#3283FE'
                                ),
                                
-                               #### 8.4.3 Shape ###
+                               ##### 8.4.3 Shape ###
                                #### "PlotVertexShape"
                                selectInput(inputId = "PlotVertexShape",
                                            label = "Shape of the plot's nodes?",
@@ -1002,7 +1096,7 @@ ui <- fluidPage(
                                            selected = 'cicle',
                                            multiple = F
                                ),
-                               ### 8.4.4 Hide the nodes' labels
+                               #### 8.4.4 Hide the nodes' labels
                                #### 'GraphNodeLabelsHide'
                                withTags(h5(b('Hide the nodes\' labels'))),
                                checkboxInput(inputId = 'GraphNodeLabelsHide',
@@ -1011,7 +1105,7 @@ ui <- fluidPage(
                                              
                                conditionalPanel(
                                  condition = 'input.GraphNodeLabelsHide==false',
-                                 ### 8.4.5 Font Family of the nodes' labels ####
+                                 #### 8.4.3 Font Family of the nodes' labels ####
                                  ### "PlotVertexLabelFontFamily"
                                  radioButtons(inputId = "PlotVertexLabelFontFamily",
                                               label = "Node labels' font",
@@ -1019,7 +1113,7 @@ ui <- fluidPage(
                                               inline = TRUE
                                  ),
                                  
-                                 ### 8.4.6 Size of the node's labels ####
+                                 #### 8.4.4 Size of the node's labels ####
                                  ### "PlotVertexLabelSize"
                                  sliderInput(inputId = "PlotVertexLabelSize",
                                              ticks = TRUE,
@@ -1030,7 +1124,7 @@ ui <- fluidPage(
                                              step = .5
                                  ),
                                  
-                                 ### 8.4.7 Distance of the node's labels ####
+                                 #### 8.4.5 Distance of the node's labels ####
                                  ### "PlotVertexLabelDist"
                                  sliderInput(inputId = "PlotVertexLabelDist",
                                              ticks = TRUE,
@@ -1040,7 +1134,7 @@ ui <- fluidPage(
                                              max = 3,
                                              step = .5
                                  ),
-                                 ### 8.4.8 Colour of the node's labels ####
+                                 #### 8.4.6 Colour of the node's labels ####
                                  ### "PlotVertexLabelColour"
                                  selectInput(inputId = "PlotVertexLabelColour",
                                              label = 'Color of the  nodes\' labels',
@@ -1055,14 +1149,14 @@ ui <- fluidPage(
                                conditionalPanel(
                                  condition = "input.ValuedMatrix == true",
                                
-                              ### 8.4.8 Edges width (manual/valued) ####
+                              #### 8.4.7 Edges width (manual/valued) ####
                                checkboxInput(inputId = "igraphPlotEdgeWidthValues",
                                              label = 'Edges\' width shows the network\'s values',
                                              value = FALSE
                                ),
                                conditionalPanel(
                                  condition = "input.igraphPlotEdgeWidthValues == true",
-                                 #### 8.4.8 (A) Max width of the edges ####
+                                 ##### 8.4.7 (A) Max width of the edges ####
                                  #### "PlotEdgeWidth"
                                  sliderInput(inputId = "igraphPlotEdgeMaxWidth",
                                              ticks = TRUE,
@@ -1075,7 +1169,7 @@ ui <- fluidPage(
                                ),
                                conditionalPanel(
                                  condition = "input.igraphPlotEdgeWidthValues == false",
-                               #### 8.4.8 (B) Width of the edge ####
+                               ##### 8.4.7 (B) Width of the edge ####
                                #### "PlotEdgeWidth"
                                sliderInput(inputId = "igraphPlotEdgeWidth",
                                            ticks = TRUE,
@@ -1086,7 +1180,7 @@ ui <- fluidPage(
                                            step = .5),
                                ),
 
-                               ### 8.4.9 Colour of the edge ####
+                               #### 8.4.8 Colour of the edge ####
                                ### "PlotEdgeColour", 'igraphPlotEdgeShadeValues'
                               
                               checkboxInput(inputId = "igraphPlotEdgeShadeValues",
@@ -1106,8 +1200,8 @@ ui <- fluidPage(
                               
                                conditionalPanel(
                                  condition = "input.directionality == true",
-                                 ### 8.4.10 Arrows ####
-                                 #### 8.4.10 (A) Whether to override arrows ####
+                                 #### 8.4.9 Arrows ####
+                                 ##### 8.4.9 (A) Whether to override arrows ####
                                  #### "OverrideigraphPlotArrows"
                                  checkboxInput(inputId = "OverrideigraphPlotArrows",
                                                label = 'Ovveriding defaultarrow settings?',
@@ -1115,14 +1209,14 @@ ui <- fluidPage(
                                  ),
                                  conditionalPanel(
                                    condition ="input.OverrideigraphPlotArrows == true",
-                                 #### 8.4.10 (B) Setting overidden plot arrows
+                                 ##### 8.4.9 (B) Setting overidden plot arrows ####
                                  #### "igraphPlotArrows"
                                  checkboxInput(inputId = "igraphPlotArrow",
                                                label = 'Display arrows',
                                                value = FALSE
                                                ),
                                  ),
-                                   #### 8.4.10 (C) Size of the edge's arrows ####
+                                   ##### 8.4.9 (C) Size of the edge's arrows ####
                                    #### "igraphPlotArrowSize"
                                    sliderInput(inputId = "igraphPlotArrowSize",
                                                label = 'Size of the edge\'s arrows',
@@ -1131,17 +1225,9 @@ ui <- fluidPage(
                                                max = 20,
                                                step = .5
                                                ),
-                                   #### 8.4.10 (D) Width of the edge's arrows
-                                   #### "PlotArrowWidth"
-                                   # sliderInput(inputId = "PlotArrowWidth",
-                                   #           label = 'Size of the edge\'s width',
-                                   #           value = 1,
-                                   #           min = .5,
-                                   #           max = 20,
-                                   #           step = .5
-                                   #           ),
+                                   
                                  ),
-                               #### 8.4.10 (B) Message "No directionality, No arrows" ####
+                               ##### 8.4.9 (D) Message "No directionality, No arrows" ####
                                conditionalPanel(
                                  condition ="input.directionality == false",
                                  withTags( 
@@ -1151,34 +1237,15 @@ ui <- fluidPage(
                                    )
                                  )
                                ),
-                               ### 8.4.12 Font Family of the edges' labels ####
+                               #### 8.4.10 Font Family of the edges' labels ####
                                ### "PlotEdgeLabelFontFamily"
                                radioButtons(inputId = "PlotEdgeLabelFontFamily",
                                             label = "Edge labels' font",
                                             choices = c("Serif"="serif","Sans serif"="sans"),
                                             inline = TRUE
                                ),
-                               ### 8.4.13 Size of the edges's labels ####
-                               ### "PlotEdgeLabelSize"
-                               # sliderInput(inputId = "PlotEdgeLabelSize",
-                               #             ticks = TRUE,
-                               #             label = 'Dimension of edge\'s labels',
-                               #             value = 1,
-                               #             min = .5,
-                               #             max = 20,
-                               #             step = .5
-                               # ),
-                               ### 8.4.14 Distance of the edges's labels ####
-                               ### "PlotEdgeLabelDist"
-                               # sliderInput(inputId = "PlotEdgeLabelDist",
-                               #             ticks = TRUE,
-                               #             label = 'Labels\' distance from edges',
-                               #             value = 0.5,
-                               #             min = .5,
-                               #             max = 3,
-                               #             step = .5
-                               # ),
-                               ### 8.4.15 Color of the edges' labels ####
+                               
+                               #### 8.4.11 Color of the edges' labels ####
                                ### "PlotEdgeLabelColour"
                               selectInput(inputId = "PlotEdgeLabelColour",
                                          label = 'Colot of the plot\'s edges',
@@ -1187,20 +1254,19 @@ ui <- fluidPage(
                               ),
                         ),
                         column(4,
+                               #### 8.4.12 Aesthetic option ####
                                h4("Aesthetic option"),
-                               ### 8.4.16 Curved ####
-                               ### "PlotEdgeCurved"
+                               
+                               #### "PlotEdgeCurved"
                                checkboxInput(inputId = "PlotEdgeCurved",
                                              label = 'Curved edges',
-                                             value = FALSE
-                               ), 
-                               
+                                             value = FALSE), 
                                
                                conditionalPanel(
                                  condition = "input.PlotSelector==1",
                                  conditionalPanel(
                                    condition = "input.AddAttr==true",
-                                   ### 8.4.1 Color of the nodes ####
+                                   ##### 8.4.12 (B) Color of the nodes ####
                                    checkboxInput(inputId = 'AttrVertexColYN',
                                                  label = 'Colour nodes from attribute',
                                                  value = F),
@@ -1208,7 +1274,7 @@ ui <- fluidPage(
                                  
                                  conditionalPanel(
                                    condition = 'input.AttrVertexColYN==false',
-                                   #### 8.4.1 (A) Color of the node without partitions ####
+                                   ##### 8.4.12 (B) Color of the node without partitions ####
                                    #### "PlotVertexColour"
                                    selectInput(inputId = "PlotVertexColour",
                                              label = 'Color of the plot\'s nodes',
@@ -1228,7 +1294,7 @@ ui <- fluidPage(
                                  ),
                                conditionalPanel(
                                  condition = "input.PlotSelector==2",
-                                 #### 8.4.1 (B) Colour of the partitions ####
+                                 ##### 8.4.12 (C) Colour of the partitions ####
                                  selectInput(inputId = 'PlotPaletteGraph',
                                              label = 'Select palette* for clusters\' colour',
                                              choices = palette.pals(),
@@ -1236,37 +1302,19 @@ ui <- fluidPage(
                                              multiple = F
                                  ),
                                  div(textOutput(outputId = 'WarningNumColoursGraph'),style='color:red;background-color: #DADADA;	margin-top: 5px; margin-right: 5px; margin-bottom: 5px; margin-left: 5px;text-align: center'),
-                                 # Identify palettes |Commented out| ####
-                                 # WRN<-warnings(
-                                 #   for(i in 1:length(palette.pals())){
-                                 #     palette.colors(n = 50,palette = palette.pals()[i])
-                                 #   })
-                                 # 
-                                 # Palettes8Cols<-
-                                 #   paste(palette.pals()[grep(names(WRN),pattern = '8')], collapse = ', ')
-                                 # Palettes9Cols<-
-                                 #   paste(palette.pals()[grep(names(WRN),pattern = '9')],collapse = ', ')
-                                 # Palettes10Cols<-
-                                 #   paste(palette.pals()[grep(names(WRN),pattern = '10')], collapse = ', ')
-                                 # Palettes26Cols<-
-                                 #   paste(palette.pals()[grep(names(WRN),pattern = '26')], collapse = ', ')
-                                 # Palettes36Cols<-
-                                 #   paste(palette.pals()[grep(names(WRN),pattern = '36')], collapse = ', ')
-                                 
                                  withTags(div(b("8 colours"),':',i("R3, R4, ggplot2, Accent, Dark 2, Pastel 2, Set 2"))),
                                  withTags(div(b("9 colours"),':',i("Okabe-Ito, Pastel 1, Set 1"))),
                                  withTags(div(b("10 colours"),':',i("Paired, Set 3, Tableau 10, Classic Tableau"))),
                                  withTags(div(b("26 colours"),':',i("Alphabet"))),
                                  withTags(p(b("36 colours"),':',i("Polychrome 36"))),
-                                 
+                                 ),
                                ),
-                               
                         ),
-                      ),
                     ),# END Conditional panel2
                     conditionalPanel(
                       condition = "input.PlotSys == 3",
-                      ## 8.5 Options for the "visNetwork" plotting sys ####
+                      
+                      ### 8.5 Options for the "visNetwork" plotting sys ####
                       withTags({
                         h4(b("visNetwork Plotting Options"))
                       }),
@@ -1277,19 +1325,19 @@ ui <- fluidPage(
                                withTags({
                                  h4("Plotting options")
                                }),
-                               ### 8.5.1 Title of the plot ####
+                               #### 8.5.1 Title of the plot ####
                                ### "visTitle"
                                textInput(inputId = "visTitle",
                                          label = 'Title of the plot',
                                          value = NULL
                                ),
-                               ### 8.5.2 Subtitle of the plot ####
+                               #### 8.5.2 Subtitle of the plot ####
                                ### "visSubtitle"
                                textInput(inputId = "visSubtitle",
                                          label = 'Subtitle of the plot',
                                          value = NULL
                                ),
-                               ### 8.5.3 Color background ####
+                               #### 8.5.3 Color background ####
                                ### "visBackground"
                                selectInput(inputId = "visBackground",
                                          label = 'Color of the plot\'s background',
@@ -1299,7 +1347,7 @@ ui <- fluidPage(
                         ),
                         column(4, offset = 1,
                                h4("Hierarchy"),
-                               ### 8.5.4 Hierarchy ####
+                               #### 8.5.4 Hierarchy ####
                                ### "visHier"
                                checkboxInput(inputId = "visHier",
                                              label = 'Hierarchical network',
@@ -1307,7 +1355,7 @@ ui <- fluidPage(
                                ),
                                conditionalPanel(
                                  condition = "input.visHier == 1",
-                                 #### 8.5.4 (A) Direction of the nodes ####
+                                 ##### 8.5.4 (A) Direction of the nodes ####
                                  #### "visHierDirection"
                                  radioButtons(inputId = "visHierDirection",
                                               label = "Direction",
@@ -1315,7 +1363,7 @@ ui <- fluidPage(
                                                           "left-right"="LR", "right-left"="RL"),
                                               inline = TRUE
                                  ),
-                                 #### 8.5.4 (B) Parent centralisation ####
+                                 ##### 8.5.4 (B) Parent centralisation ####
                                  #### "visHierCentralisation"
                                  checkboxInput(inputId = "visHierCentralisation",
                                                label = 'Centralise parent nodes',
@@ -1327,7 +1375,7 @@ ui <- fluidPage(
                                h4("Aestetics"),
                                
                                withTags(h5(b("Nodes"))),
-                               ### 8.5.5 Nodes' colours ####
+                               #### 8.5.5 Nodes' colours ####
                                conditionalPanel(
                                  condition = "input.PlotSelector==1",
                                  conditionalPanel(
@@ -1380,7 +1428,7 @@ ui <- fluidPage(
                                  ),
                                
                                
-                               ### 8.5.6 Nodes' shape
+                               #### 8.5.6 Nodes' shape
                                selectInput(inputId = 'visNetworkNodeShape',
                                            label = 'Shape',
                                            choices = c('Square'="square", 'Triangle'="triangle",
@@ -1390,7 +1438,7 @@ ui <- fluidPage(
                                            selected = 'circle',
                                            multiple = F),
                                
-                               ### 8.5.6 Nodes' size
+                               #### 8.5.6 Nodes' size
                                ### "visNetworkNodeSize"
                                sliderInput(inputId = "visNetworkNodeSize",
                                            ticks = TRUE,
@@ -1400,7 +1448,7 @@ ui <- fluidPage(
                                            max = 20,
                                            step = .5
                                            ),
-                               ### 8.5.6 Nodes' shadow
+                               #### 8.5.6 Nodes' shadow
                                ### 'visNetworkNodeShadow'
                                checkboxInput(inputId = 'visNetworkNodeShadow',
                                              label = 'Draw a shadow?',
@@ -1421,21 +1469,21 @@ ui <- fluidPage(
                                
                                withTags(h5(b("Edges"))),
                                
-                               ### 8.5.7 Edges' colour
+                               #### 8.5.7 Edges' colour
                                ### "visNetworkEdgeColour"
                                textInput(inputId = "visNetworkEdgeColour",
                                          label = 'Color of the plot\'s edges',
                                          value = "SkyBlue"
                                ),
                                
-                               ### 8.5.7 Edges' highlight colour
+                               #### 8.5.7 Edges' highlight colour
                                ### "visNetworkEdgeHighlight"
                                textInput(inputId = "visNetworkEdgeHighlight",
                                          label = 'Color of the higlighted edge',
                                          value = "yellow"
                                ),
                                
-                               ### 8.5.8 Edges' shadow
+                               #### 8.5.8 Edges' shadow
                                ### 'visNetworkNodeShadow'
                                checkboxInput(inputId = 'visNetworkEdgeShadow',
                                              label = 'Draw a shadow?',
@@ -1448,14 +1496,21 @@ ui <- fluidPage(
             ),# Tabset panel
     )# ui
 
-# §2 Output ####
+#Sect. 2 Output ####
 server <- function(input, output, session) {
   
   # 0. Reactive values ####
   Tbl<-reactiveValues(Current = NULL,Rows=NULL,Cols=NULL)
-  Blck<-reactiveValues(RunAlready = FALSE,Custom=NULL)
+  Blck<-reactiveValues(RunAlready = FALSE,Custom=NULL,
+                       Count=0,Previous=list())
+  ## 0.1 Reset Blck$Previous's length
+  observe({
+    if(length(Blck$Previous)!=input$Restore_MaxMemory){
+      length(Blck$Previous)<<-input$Restore_MaxMemory
+    }
+  })
   
-  # 0.1 Reset 'Blck$RunAlready' if it becomes NULL
+  # 0.2 Reset 'Blck$RunAlready' if it becomes NULL
   observeEvent(eventExpr = c(Blck$RunAlready),handlerExpr = {
     YN<-Blck$RunAlready
     if(is.null(YN)){
@@ -1463,13 +1518,13 @@ server <- function(input, output, session) {
     }
   })
   
-  # 1. Reading data ####
+  ## 1. Reading data ####
   # "aj"
   ReadData<-eventReactive(input$aj,{
-    ## 1.1 Preloaded data 
+    ### 1.1 Preloaded data 
     if(input$blckmdlngRDS){
       
-      ### 1.1.1 From block model results
+      #### 1.1.1 From block model results
       dat<-mdllng()$initial.param$M
       MatrixType<-"adjacency"
       
@@ -1477,7 +1532,7 @@ server <- function(input, output, session) {
       Blck$RunAlready<<-TRUE
       
     } else if(input$Sample){
-      ### 1.1.2 From sample
+      #### 1.1.2 From sample
       dat<-readRDS(file = "./Sample.rds")
       MatrixType<-"adjacency"
       
@@ -1488,10 +1543,10 @@ server <- function(input, output, session) {
       #### Blockmodeling wasn't run yet
       Blck$RunAlready<<-FALSE
       
-      ## 1.2 Options for text/plain files ####
+      ### 1.2 Options for text/plain files ####
       if(input$type!=4){
         
-        ### 1.2.1 If the separator is 'other' ####
+        #### 1.2.1 If the separator is 'other' ####
         ### "OtherSep"
         if(input$OtherSep!="")input$sep<-input$OtherSep
         
@@ -1500,7 +1555,7 @@ server <- function(input, output, session) {
                          type = 'default', id = 'ReadingList',
                          duration = NULL, closeButton = F)
         
-        ### 1.2.3 Determine type of file provided ####
+        #### 1.2.3 Determine type of file provided ####
         if(input$type==1){
           MatrixType<-"adjacency"
           # For adj matrix, the row names should always be
@@ -1526,7 +1581,7 @@ server <- function(input, output, session) {
         removeNotification('ReadingList')
         
       } else {
-        ## 1.3 Pajek input ####
+        ### 1.3 Pajek input ####
         ## "PajekFile", "PajekInput"
         
         ### Notification "Reading list in progress"
@@ -1539,13 +1594,13 @@ server <- function(input, output, session) {
         MatrixType<-"adjacency"
         UploadedFile<-input$PajekFile
         
-        ### 1.3.1 Reads the data from Pajek .net file ####
+        #### 1.3.1 Reads the data from Pajek .net file ####
         if(input$PajekInput=="PajekNetwork"){
           dat <- loadnetwork(filename = UploadedFile$datapath,
                              useSparseMatrix = F)
         }
         
-        ### 1.3.2 Reads the data from Pajek .mat file ####
+        #### 1.3.2 Reads the data from Pajek .mat file ####
         if(input$PajekInput=="PajekMatrix"){
           loadmatrix(filename = UploadedFile$datapath)
           dat <- loadmatrix(filename = UploadedFile$datapath)
@@ -1558,10 +1613,10 @@ server <- function(input, output, session) {
     dat
     })
 
-  # 2. Create network object ####
+  ## 2. Create network object ####
   NW<-eventReactive(ReadData(),{
     dat<-ReadData()
-    ## 2.1 Determine type of file provided
+    ### 2.1 Determine type of file provided
     if(input$type== 1){
       MatrixType<-"adjacency"
       # For adj matrix, the row names should always be
@@ -1574,7 +1629,7 @@ server <- function(input, output, session) {
       if(input$type==4)MatrixType<-"adjacency"
     }
     
-    ## 2.2 Checks for valued networks ####
+    ### 2.2 Checks for valued networks ####
     ## "ValuedMatrix", "ValuesName"
     if(input$ValuedMatrix){
       IgnoreEval<-FALSE
@@ -1584,7 +1639,7 @@ server <- function(input, output, session) {
       ValuesName<-NULL
     }
     
-    ## 2.3 Turn the matrix into a network ####
+    ### 2.3 Turn the matrix into a network ####
     ## "directionality","loops", "parallel"
     dat <- network::network(x = dat,
                             directed = input$directionality,
@@ -1594,26 +1649,26 @@ server <- function(input, output, session) {
                             ignore.eval = IgnoreEval,
                             names.eval = ValuesName)
     
-    ### 2.3.1 Notification "Multiplex matrix"
+    #### 2.3.1 Notification "Multiplex matrix"
     if(is.multiplex(dat)){
       showNotification(ui = "The uploaded list contains a multiplex matrix. The matrix may need to be simplified by removing both loops and multiple edges.",
                        type = 'warning',
                        duration = 5, closeButton = T)
     }
     
-    ### 2.3.2 Notification "Bipartite matrix"
+    #### 2.3.2 Notification "Bipartite matrix"
     if(network::is.bipartite(dat)){
       showNotification(ui = "The uploaded list contains a bipartite matrix. Bipartition will be ignored",
                        type = 'warning',
                        duration = 5, closeButton = T)
     }
     
-    ### 2.3.3 Notification "Reading file completed"
+    #### 2.3.3 Notification "Reading file completed"
     showNotification(ui = "Elaboration of uploaded file completed",
                      type = 'default',
                      duration = 10, closeButton = T)
     
-    ## 2.4 Add attributes ####
+    ### 2.4 Add attributes ####
     if(input$AddAttr){
       AddAttrVal<-read.table(file = input$AddAttrFile$datapath,
                              header = F,quote = "",col.names = F)
@@ -1624,16 +1679,16 @@ server <- function(input, output, session) {
     dat
   })
   
-  # 3. Get adjacency matrix ####
+  ## 3. Get adjacency matrix ####
   # Converts edge lists and incidence matrices in adjacency matrix
   
   GetAdjacencyMatrix<-eventReactive(ReadData(),{
-    ## 3.1 data from file ####
+    ### 3.1 data from file ####
       
       ### Determine type of file provided
       if(input$type==2||input$type==3){
         
-        ### 3.1.1 For edge lists and incidence matrices ####
+        #### 3.1.1 For edge lists and incidence matrices ####
         if(input$type==2)MatrixType<-"edgelist"
         if(input$type==3)MatrixType<-"incidence"
         
@@ -1642,21 +1697,21 @@ server <- function(input, output, session) {
         
         #### Converts the network in an adjacency matrix
         if(input$ValuedMatrix){
-          ### 3.1.1 (A) for valued networks ####
+          ##### 3.1.1 (A) for valued networks ####
           M<-as.matrix.network(x = dat,matrix.type = "adjacency",
                                attrname = "weights")
         } else {
-          #### 3.1.1 (B) for non-valued networks ####
+          ##### 3.1.1 (B) for non-valued networks ####
           M<-as.matrix.network(x = dat,matrix.type = "adjacency")
         }
       } else {
-        ## 3.2 Otherwise, the data is already in the right format
+        ### 3.2 Otherwise, the data is already in the right format
         M<-ReadData()
       }
     M
   })
   
-  # 4. Outputting summary text ####
+  ## 4. Outputting summary text ####
   # "summary", "IncludeAdj"
   
   output$summary <- renderPrint({
@@ -1689,13 +1744,14 @@ server <- function(input, output, session) {
       ## Loads blockmodeling's result
       if(Blck$RunAlready==TRUE){
         dat<-mdllng()
-        output<-plot(dat,main="",which = input$whichIM_adjPlot)
+        output<-plot(dat,main="",which = input$whichIM_adjPlot,
+                     mar=rep(input$MatrixPlotMargin,4))
       } else {
         dat<-GetAdjacencyMatrix()
         dat<<-dat
         ## Plots the original matrix
         output<-plotMat(x = dat,ylab = '',xlab = '',plot.legend = F,
-                main = '',title.line = '')
+                main = '',title.line = '', mar=rep(input$MatrixPlotMargin,4))
         
         ## Notification "Plotting original matrix instead of partititoned" 
         showNotification(ui = 'Plotting original matrix instead of partitioned because blockmodeling had not been ran yet',
@@ -1716,7 +1772,7 @@ server <- function(input, output, session) {
         
         ## Plots the original matrix
         output<-plotMat(x = dat,ylab = '',xlab = '',plot.legend = F,
-                main = '',title.line = '')
+                main = '',title.line = '', mar=rep(input$MatrixPlotMargin,4))
     }
     output
   },height = 600,width = 800,res = 128)
@@ -2040,12 +2096,20 @@ server <- function(input, output, session) {
   
   mdllng <- eventReactive(input$blckmdlngRun, {
     
-    if(input$blckmdlngRDS){
-      ## 9.1 Blockmodeling from RDS file
+    ## 9.1 Alternative blockmodeling sources ####
+    if(input$Restore_Switch){
+      ### 9.1.1 Restore from Memory
+      blck<<-Blck$Previous[[input$Restore_Selector]]
+      ## Notification "Reading block-model results from RDS" 
+      showNotification(ui = "Restoring blockmodeling's results from memory",
+                       type = 'message',
+                       duration = 10, closeButton = T)
+    } else if(input$blckmdlngRDS){
+      ### 9.1.2 Blockmodeling from RDS file ####
       
       ## Notification "Reading block-model results from RDS" 
       showNotification(ui = "Reading blockmodeling's results from file",
-                       type = 'message',id = 'FileCustomBlckmdlng',
+                       type = 'message',
                        duration = 10, closeButton = T)
       
       ## Reading RDS file
@@ -2079,7 +2143,7 @@ server <- function(input, output, session) {
       }
       
       ## 9.4 Checks customised blockmodeling ####
-      if(input$blckmdlngPrespecifiedYN|input$EditUploadedArray){
+      if(input$blckmdlngPrespecified_Switch|input$EditUploadedArray){
         ### Use DT block-model
         condition<-magrittr::and(is.null(input$PrespecifiedArrayRDS),
                                  is.null(input$PrespecifiedArrayRData))
@@ -2205,7 +2269,19 @@ server <- function(input, output, session) {
       
       Blck$Custom<<-BlockTypes
       
-      ## 9.5 Executes blockmodeling ####
+      ## 9.5 Block types' weights
+      ## blockTypeWeights
+      if(input$blockTypeWeights_Switch){
+        blockTypeWeights<-c(com=input$blockTypeWeights_com,
+                            nul=input$blockTypeWeights_nul,
+                            dnc=input$blockTypeWeights_dnc,
+                            rre=input$blockTypeWeights_rre,
+                            cre=input$blockTypeWeights_cre,
+                            reg=input$blockTypeWeights_reg
+                            )
+      } else {blockTypeWeights<-1}
+      
+      ## 9.6 Executes blockmodeling ####
       blck<-
         optRandomParC(M = M,
                       k = NumClusters,
@@ -2221,29 +2297,47 @@ server <- function(input, output, session) {
                       printRep = input$blckmdlngPrintRep,
                       usePreSpecM = usePreSpecM,
                       preSpecM = ParamM,
-                      nCores = MultiCore
+                      nCores = MultiCore,
+                      blockTypeWeights = blockTypeWeights
         )
       
-      ## Modal spinner, remove
+      ## 9.6.1 Modal spinner, remove ####
       remove_modal_spinner()
       
-      ## Remember that the blockmodel was run
+      ## 9.6.2 Remember that the blockmodel was run ####
       Blck$RunAlready<<-TRUE
       
-      # Notification "Blockmodeling completed"
-      showNotification(ui = "Blockmodeling completed",
+      ## 9.6.3 Store result ####
+      Blck$Count<<-Blck$Count+1
+      if(Blck$Count>input$Restore_MaxMemory){
+        ### 9.6.3 (A) Notification Restore memory reset
+        showNotification(ui = paste("Result memory full, emptying"),
+                         type = "message",
+                         duration = 20, closeButton = T)
+        ### 9.6.3 (B) Reset full memory
+        Blck$Count<<-1
+        Blck$Previous<<-list(); length(Blck$Previous)<<-input$Restore_MaxMemory
+      }
+      ### 9.6.3 (C) Store result
+      Blck$Previous[[Blck$Count]]<<-blck
+      
+      ### 9.6.3 (D)  Notification Memory slot used
+      showNotification(ui = paste("Result stored in slot:",Blck$Count),
                        type = "message",
-                       duration = 2, closeButton = T)
-    }
+                       duration = 20, closeButton = T)
+      } # /else of RDS input
     
-    
+    ## Notification "Blockmodeling completed"
+    showNotification(ui = "Blockmodeling completed. Result stored in slot",
+                     type = "message",
+                     duration = 2, closeButton = T)
     
     blck
     })
   
-  # 10. Outputs blockmodeling ####
+  ## 10. Outputs blockmodeling ####
   
-  ## 10.1 Blockmodeling output in a table ####
+  ### 10.1 Blockmodeling output in a table ####
   TableBlockmdllng<-eventReactive(mdllng(),{
     ValueFromName<-
       function(Var.Name,collapse=F,sep=","){
@@ -2281,21 +2375,21 @@ server <- function(input, output, session) {
     tbl
   })
   
-  ## 10.2 Renders blockmodeling output in a table ####
+  ### 10.2 Renders blockmodeling output in a table ####
 
   output$Tableblckmdlng<- renderTable({
     TableBlockmdllng()
   },colnames = T,rownames = F,striped = F,hover = T,bordered = T,
   spacing = "s",width = "auto",align = "c",digits = 0,quoted = F)
   
-  ## 10.3 Renders blockmodeling output as summary ####
+  ### 10.3 Renders blockmodeling output as summary ####
   output$Summaryblckmdlng <- renderPrint({
     blck<-mdllng()
     blck
   })
   
-  ## 10.4 Image matrix (IM) ####
-  ### 10.4.1 Disassembles image matrix as tables ####
+  ### 10.4 Image matrix (IM) ####
+  #### 10.4.1 Disassembles image matrix as tables ####
   IM<-eventReactive(c(input$whichIM,mdllng()),{
     Disassemble.Array<-
       function(array){
@@ -2321,7 +2415,7 @@ server <- function(input, output, session) {
     return(matrix)
   })
   
-  ### 10.4.2 Renders image matrix as tables ####
+  #### 10.4.2 Renders image matrix as tables ####
   output$TableIM<- renderTable({
     IM()
   },colnames = T,rownames = T,striped = T,hover = T,bordered = T,
@@ -2332,7 +2426,7 @@ server <- function(input, output, session) {
         EM_Table<-EM(res = mdllng(),
                      which = input$whichIM)
         colnames(EM_Table)<-1:ncol(EM_Table)
-        EM_Table
+        formatC(x = EM_Table,format = 'f',digits = input$DigitsEM)
   },colnames = T,rownames = T,striped = T,hover = T,bordered = T,
   spacing = "s",width = "auto",align = "c",digits = 0,quoted = F)
   
@@ -2342,11 +2436,11 @@ server <- function(input, output, session) {
                                            which=input$whichIM,
                                            FUN='mean',na.rm=T)
     colnames(Mean_Table)<-1:ncol(Mean_Table)
-    Mean_Table
+    formatC(x = Mean_Table,format = 'f',digits = input$DigitsMean)
   },colnames = T,rownames = T,striped = T,hover = T,bordered = T,
   spacing = "s",width = "auto",align = "c",digits = 0,quoted = F)
   
-  # 11. Download blockmodeling results to file ####
+  ## 11. Download blockmodeling results to file ####
   output$DownloadBlckRDS <- downloadHandler(
     filename = "Blockmodeling results.RDS",
     content = function(file) {
@@ -2354,7 +2448,7 @@ server <- function(input, output, session) {
     }
   )
   
-  # 11. Download clusters to file ####
+  ## 11. Download clusters to file ####
   output$DownloadClu <- downloadHandler(
     filename = "partitions.clu",
     content = function(file) {
@@ -2363,9 +2457,9 @@ server <- function(input, output, session) {
       }
     )
   
-  # 12. Download image matrix ####
+  ## 12. Download image matrix ####
   
-  ## 12.1 As plain text ####
+  ### 12.1 As plain text ####
   ## dropIM, whichIM
   output$DownloadIMtext <- downloadHandler(
     filename = "image.txt",
@@ -2378,7 +2472,7 @@ server <- function(input, output, session) {
       }
     )
   
-  ## 12.2 As RDS ####
+  ### 12.2 As RDS ####
   ## dropIM, whichIM
   output$DownloadIMrds <- downloadHandler(
     filename = "image.RDS",
@@ -2391,7 +2485,7 @@ server <- function(input, output, session) {
       }
     )
   
-  # 13. Block-model from file/sample ####
+  ## 13. Block-model from file/sample ####
     observeEvent(input$UploadArray,{
       ## Prepares condition
       conditionArray<-
@@ -2400,19 +2494,19 @@ server <- function(input, output, session) {
       ## Checks condition
       if(conditionArray&!input$EditUploadedArray){
         if(input$ArrayInput==".RDS"){
-          ## 13.1 Reading RDS file ####
+          ### 13.1 Reading RDS file ####
           UploadedFile<-input$PrespecifiedArrayRDS
           Layers<-readRDS(file = UploadedFile$datapath)
           Layers<<-Layers
         } else if(input$ArrayInput==".RData"){
-          ## 13.2 Reading RData file ####
+          ### 13.2 Reading RData file ####
           UploadedFile<-input$PrespecifiedArrayRData
           load(file = UploadedFile$datapath)
           ImportedArray<-load(file = UploadedFile$datapath)
           Layers<-eval(parse(text = ImportedArray))
         }
         
-        ## 13.3 Unmaking array ####
+        ### 13.3 Unmaking array ####
         if(length(dim(Layers))==4){
           ## Preparing data frame
           UnmakingArray<-matrix(NA,nrow = dim(Layers)[3],ncol = dim(Layers)[4])
@@ -2448,12 +2542,12 @@ server <- function(input, output, session) {
       }
     })
   
-  # 14. Cells' selection ####
+  ## 14. Cells' selection ####
   observeEvent(input$CustomBlockModel_cell_clicked,{
     Tbl$Rows<<-c(Tbl$Rows,input$CustomBlockModel_cell_clicked$row)
     Tbl$Cols<<-c(Tbl$Cols,input$CustomBlockModel_cell_clicked$col)
     
-    ## 14.1 Checks for de-selection ####
+    ### 14.1 Checks for de-selection ####
     if(length(Tbl$Rows!=1)){
       pairs<-rep(0,length(Tbl$Rows))
       for(i in 1:length(pairs)){
@@ -2476,16 +2570,16 @@ server <- function(input, output, session) {
     }
   })
   
-  # 15. Reset and select All ####
+  ## 15. Reset and select All ####
   proxy=dataTableProxy(outputId = 'CustomBlockModel')
   
-  ## 15.1 Reset ####
+  ### 15.1 Reset ####
   observeEvent(input$ResetSelectionDT,{
     reloadData(proxy = proxy,Tbl$Current,clearSelection = 'all')
     Tbl$Cols<<-Tbl$Rows<<-NULL
   })
   
-  # 15.2 Select all ####
+  ## 15.2 Select all ####
   observeEvent(input$SelectAllDT,{
     selectAll<-matrix(NA,ncol = 2,nrow = nrow(Tbl$Current)*ncol(Tbl$Current))
     Tbl$Rows<<-selectAll[,1]<-rep(1:nrow(Tbl$Current),each=ncol(Tbl$Current))
@@ -2494,7 +2588,7 @@ server <- function(input, output, session) {
     selectCells(proxy = proxy,selected = selectAll)
   })
   
-  # 16.  (Re)Initialise TblCurrent if empty ####
+  ## 16.  (Re)Initialise TblCurrent if empty ####
     observeEvent(c(input$LoadBlocksIntoDT,input$UploadArray,input$SetSizeDT),{
       TblCurrent<<-Tbl$Current
       if(is.null(TblCurrent)){
@@ -2508,7 +2602,7 @@ server <- function(input, output, session) {
       }
     })
   
-  # 17. Change block-model size ####
+  ## 17. Change block-model size ####
   observeEvent(input$SetSizeDT,{
       if(ncol(TblCurrent)!=input$CustoomBlockModel_NumberCluster){
         if(ncol(TblCurrent)<input$CustoomBlockModel_NumberCluster){
@@ -2535,7 +2629,7 @@ server <- function(input, output, session) {
       }
     })
   
-  # 18. Loading imputed data into table ####
+  ## 18. Loading imputed data into table ####
   observeEvent(input$LoadBlocksIntoDT,{
       HitRows<<-Tbl$Rows; HitCols<<-Tbl$Cols
       if(!is.null(Tbl$Rows)){
@@ -2551,7 +2645,7 @@ server <- function(input, output, session) {
     })
 
   
-  # 19. Visualise table ####
+  ## 19. Visualise table ####
   output$CustomBlockModel<-
     DT::renderDataTable({
       ## Read from reactive
@@ -2563,7 +2657,7 @@ server <- function(input, output, session) {
     },selection = list(mode="multiple",target='cell',selectable=matrix(c(-1:-nrow(Tbl$Current),rep(0,nrow(Tbl$Current))),ncol = 2)),
     options = list(paging =FALSE, searching=FALSE,ordering=FALSE),style='bootstrap4')
   
-  # 20. Download adjacency matrix ####
+  ## 20. Download adjacency matrix ####
   output$downloadAdj<-
     downloadHandler(
       filename = "Adjacency Matrix.txt",
@@ -2574,7 +2668,7 @@ server <- function(input, output, session) {
       contentType = 'text/csv'
     )
   
-  # 21. Download custom blockmodel ####
+  ## 21. Download custom blockmodel ####
   output$downloadCustomBlck<-
     downloadHandler(
       filename = "Pre-specified Blockmodel.RDS",
