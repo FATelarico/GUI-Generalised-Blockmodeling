@@ -51,15 +51,12 @@ ui <- fluidPage(
                 ), # /tr
               ), # /table
             div(class="titleRect",
-                div(class="title2",
-                    p('This app provides some useful tools for the analysis of one-mode networks withstructurally-equivalent nodes. Besides offering general summary info and a visualisation, this app allows also to perform a one-mode, generalised blockmodeling using the "homogeinity" method'),
-                    'To lean more about how this can be helpful to you, you can check the descriptions of the packages employed here:',
+                div(class="title2",.noWS = c('outside', 'after-begin', 'before-end'),
+                    'This app provides some useful tools for Offering an accessible GUI for generalised blockmodeling of single-relation, one-mode networks. The user can  execute blockmodeling without having to write a line code by using the app\'s visual helps. Moreover, there are several ways to visualisations networks and their partitions. Finally, the results can be exported as if they were produced by writing code. To lean more about how this can be helpful to you, you can check the descriptions of the package',
                     a(href="https://cran.r-project.org/package=blockmodeling", "blockmodeling"),
-                    'by Ale\u0161 \u017Diberna and',
-                    a(href="https://cran.r-project.org/package=network", "network"),
-                    'by Carter Butts and others',
-                    )# /div "title2"
-                )# /div "titleRect"
+                    'by Ale\u0161 \u017Diberna'
+                )# /div "title2"
+            ) # /div "titleRect"
             ) # div "Header"
         })
     }),
@@ -265,7 +262,7 @@ ui <- fluidPage(
             tabPanel(title = "Generalised blockmodeling",
                      ## 5. Block-modeling ####
                      sidebarLayout(
-                       sidebarPanel(width = 12,
+                       sidebarPanel(width = 9,
                                     withTags({
                                       div(h3(b("Customise blockmodeling")))
                                       }),
@@ -420,30 +417,177 @@ ui <- fluidPage(
                                                step = 10),
 
                                   #### 5.3.6 Saving initial parameters ####
-                                  withTags(i("Saving the additional parameters can take up more memory, but also preserve precious information")),
-                                  #### "blckmdlngInitialParams"
-                                  checkboxInput(inputId = "blckmdlngInitialParams",
-                                                label = 'Should the initial parameters be saved?',
-                                                value = TRUE),
-
+                                  fluidRow(
+                                    column(5,
+                                           #### "blckmdlngInitialParams"
+                                           checkboxInput(inputId = "blckmdlngInitialParams",
+                                                         label = 'Should the initial parameters be saved?',
+                                                         value = TRUE),
+                                           ),
+                                    column(7,
+                                           withTags(i("Saving the additional parameters can take up more memory, but also preserve precious information")),
+                                    ),
+                                  ),
+                                  
                                   #### 5.3.6 Returning  all ####
-                                  #### "blckmdlngAll"
-                                  checkboxInput(inputId = "blckmdlngAll",
-                                                label = 'Should solution be shown for all partitions (not only the best one)?*',
-                                                value = TRUE),
-
-                                  withTags(i("Disable for very complex calculation and/or low-end machines")),
-
+                                  fluidRow(
+                                    column(7,
+                                           #### "blckmdlngAll"
+                                           checkboxInput(inputId = "blckmdlngAll",
+                                                         label = 'Should solution be shown for all partitions (not only the best one)?*',
+                                                         value = TRUE),),
+                                    column(5,
+                                           withTags(i("Disable for very complex calculation and/or low-end machines")),
+                                           ),
+                                  ),
+                                  
+                                  ### 5.8 Which best partition to print ####
+                                  conditionalPanel(
+                                    condition = 'input.blckmdlngAll==true',
+                                    fluidRow(
+                                      column(7,
+                                             ### "whichIM"
+                                             condition = "input.blckmdlngAll==true",
+                                             numericInput(inputId = "whichIM",
+                                                          label = 'Which "best" partition should be printed?*',
+                                                          value = 1,
+                                                          min = 1,
+                                                          step = 1),
+                                      ),  # / col
+                                      column(5,
+                                             br(''),withTags(i('*Affects also error matrix and mean matrix')),
+                                      ), # / col
+                                    ), # / Fluid row
+                                  ), # / Conditional panel
+                                  
+                                  
                                   #### 5.3.7 Printing extra info ####
                                   #### "blckmdlngPrintRep"
                                   checkboxInput(inputId = "blckmdlngPrintRep",
                                                 label = 'Should some information about each optimization be printed?',
                                                 value = TRUE),
+                                  
+                                  
+                                  
                                   ), # Column 4
                            ), # / Col layout
                          ), # / Sidebar panel
-                       mainPanel(width=12,
+                       mainPanel(width = 3,
+                         
+                                 ### 5.6 Start blockmodeling ####
+                                 ### "blckmdlngRun"
+                                 withTags(h4(b("Start blockmodeling"))),
                                  
+                                 actionButton(inputId = "blckmdlngRun",
+                                              label = "Process data",
+                                              icon = icon(name = "calculator",
+                                                          lib = "font-awesome")
+                                 ),
+                                 hr(),
+                                 
+                                 ### 5.7 Restore from memory ####
+                                 withTags(h4(b("Restore from memory"))),
+                                 checkboxInput(inputId = 'Restore_Switch',
+                                               label = 'Check to restore previous results',
+                                               value = F),
+                                 conditionalPanel(
+                                   condition = 'input.Restore_Switch==true',
+                                   numericInput(inputId = 'Restore_Selector',
+                                                label = 'Memory slot to restore',
+                                                value = 1,min = 1,max = 10),
+                                   withTags(h5(style='color=#ff0000',
+                                               b(i('Press "Process data" to restore'))
+                                   )),
+                                 ),
+                                 hr(),
+                                 
+                                 ### 5.7 Upload results ####
+                                 withTags(h4(b("Upload results"))),
+                                 checkboxInput(inputId = "blckmdlngRDS",
+                                               label = "Upload blockmodelling results",
+                                               value = F),
+                                 
+                                 ### 5.9 Load blockmodeling results from RDS ####
+                                 ### "blckmdlngRDS", "blckmdlngFileRDS"
+                                 
+                                 #### Upload results as RDS file
+                                 conditionalPanel(
+                                   condition = 'input.blckmdlngRDS==true',
+                                   fileInput(inputId = "blckmdlngFileRDS",
+                                             label = NULL,
+                                             multiple = F,
+                                             buttonLabel = "Browse",
+                                             placeholder = "Your RDS file here",
+                                             accept = c(".RDS")
+                                   ),
+                                   withTags(h5(i('Use the "Read Data" button under the "Data upload" tab to read the matrix from this file'))),
+                                 ),# Conditional panel RDS
+                                 hr(),
+                                 
+                                 ### 5.10 Download blockmodeling RDS ####
+                                 ### "DownloadBlckRDS"
+                                 withTags(h4(b("Downloads"))),
+                                 withTags(h5(b("Download results"))),
+                                 p(
+                                   downloadButton(outputId = "DownloadBlckRDS",
+                                                  label = "Download blockmodeling results",
+                                                  icon = icon(name = "download",
+                                                              lib = "font-awesome")
+                                   ),
+                                   conditionalPanel(
+                                     condition = 'input.blckmdlngPrespecified_Switch==true',
+                                     withTags(i('After processing the data it will be possible to download the custom blockmodel')),  
+                                     downloadButton(outputId = 'downloadCustomBlck',
+                                                    label = 'Download custom blockmodel',
+                                                    icon = icon(name = "download",
+                                                                lib = "font-awesome")
+                                     ),
+                                   ),
+                                 ),
+                                 
+                                 p(
+                                   ### 5.11 Download vector partitions ####
+                                   ### "DownloadClu"
+                                   downloadButton(outputId = "DownloadClu",
+                                                  label = "Download partitions as vector",
+                                                  icon = icon(name = "download",
+                                                              lib = "font-awesome")
+                                   ),
+                                 ),
+                                 withTags(h5(b("Other downloads"))),
+                                 ### 5.12 Download image matrix ####
+                                 conditionalPanel(
+                                   condition = "input.dropIM == true",
+                                   p(
+                                     # "DownloadIMtext"
+                                     downloadButton(outputId = "DownloadIMtext",
+                                                    label = "Download image matrix as txt",
+                                                    inline=T,
+                                                    icon = icon(name = "table",
+                                                                lib = "font-awesome")
+                                     ),
+                                     
+                                   ),
+                                   
+                                 ),
+                                 # "DownloadIMrds"
+                                 p(
+                                   downloadButton(outputId = "DownloadIMrds",
+                                                  label = "Download image matrix as RDS",
+                                                  inline=T,
+                                                  icon = icon(name = "table",
+                                                              lib = "font-awesome")
+                                   ),
+                                 ),
+                                 # "DropIM"
+                                 checkboxInput(inputId = "dropIM",
+                                               label = 'Drop one-element dimensions',
+                                               value = TRUE,
+                                               width = '100%'),
+                                 ), # / main panel
+                     ),# / Sidebar Layout
+                       mainPanel(
+                         width=12,
                                  ### 5.4  Set block-types weights - Menu ####
                                  conditionalPanel(
                                    condition = 'input.blockTypeWeights_Show==true',
@@ -625,145 +769,6 @@ ui <- fluidPage(
                                      ),
                                    ),
                                  ), # / conditional panel blckmdlngPrespecified_Show==T
-                                 
-                         
-                         fluidRow(
-                           column(4,
-                             ### 5.6 Start blockmodeling ####
-                             ### "blckmdlngRun"
-                             withTags(h5(b("Start blockmodeling"))),
-                             
-                             actionButton(inputId = "blckmdlngRun",
-                                          label = "Process data",
-                                          icon = icon(name = "calculator",
-                                                      lib = "font-awesome")
-                                          ),
-                           ),
-                           column(4,
-                                  ### 5.7 Restore from memory ####
-                                  checkboxInput(inputId = 'Restore_Switch',
-                                                label = 'Check to restore previous results',
-                                                value = F),
-                                  conditionalPanel(
-                                    condition = 'input.Restore_Switch==true',
-                                    numericInput(inputId = 'Restore_Selector',
-                                                 label = 'Memory slot to restore',
-                                                 value = 1,min = 1,max = 10),
-                                    withTags(h5(style='color=#ff0000',
-                                                b(i('Press "Process data" to restore'))
-                                                )),
-                                    ),
-                                  ),
-                           column(4,
-                                  ### 5.8 Which best partition to print ####
-                                  ### "whichIM"
-                                  condition = "input.blckmdlngAll==true",
-                                  numericInput(inputId = "whichIM",
-                                               label = 'Which "best" partition should be printed?',
-                                               value = 1,
-                                               min = 1,
-                                               step = 1,
-                                               ),
-                                  withTags(i('Affects also error matrix and mean matrix')),
-                                  ),
-                         ),
-                         
-                         hr(),
-                         
-                         fluidRow(
-                           column(4,
-                                 
-                                  withTags(h5(b("Upload results"))),
-                                  checkboxInput(inputId = "blckmdlngRDS",
-                                                label = "Upload blockmodelling results",
-                                                value = F),
-                                  ### 5.9 Load blockmodeling results from RDS ####
-                                  ### "blckmdlngRDS", "blckmdlngFileRDS"
-
-                                  #### Upload results as RDS file
-                                  conditionalPanel(
-                                    condition = 'input.blckmdlngRDS==true',
-                                    fileInput(inputId = "blckmdlngFileRDS",
-                                              label = NULL,
-                                              multiple = F,
-                                              buttonLabel = "Browse",
-                                              placeholder = "Your RDS file here",
-                                              accept = c(".RDS")
-                                    ),
-                                    withTags(h5(i('Use the "Read Data" button under the "Data upload" tab to read the matrix from this file'))),
-                                  ),# Conditional panel RDS
-
-                           
-
-                           ),
-                           column(4,
-                                  ### 5.10 Download blockmodeling RDS ####
-                                  ### "DownloadBlckRDS"
-                                  withTags(h5(b("Download results"))),
-                                  p(
-                                    downloadButton(outputId = "DownloadBlckRDS",
-                                                   label = "Download blockmodeling results",
-                                                   icon = icon(name = "download",
-                                                               lib = "font-awesome")
-                                                   ),
-                                    conditionalPanel(
-                                      condition = 'input.blckmdlngPrespecified_Switch==true',
-                                      withTags(i('After processing the data it will be possible to download the custom blockmodel')),  
-                                      downloadButton(outputId = 'downloadCustomBlck',
-                                                       label = 'Download custom blockmodel',
-                                                       icon = icon(name = "download",
-                                                                   lib = "font-awesome")
-                                                       ),
-                                      ),
-                                  ),
-
-                                 p(
-                                   ### 5.11 Download vector partitions ####
-                                   ### "DownloadClu"
-                                   downloadButton(outputId = "DownloadClu",
-                                                  label = "Download partitions as vector",
-                                                  icon = icon(name = "download",
-                                                              lib = "font-awesome")
-                                   ),
-                                 ),
-                                 ), # / Col
-                           column(4,
-                                  withTags(h5(b("Other downloads"))),
-                                  ### 5.12 Download image matrix ####
-                                  conditionalPanel(
-                                    condition = "input.dropIM == true",
-                                    p(
-                                      # "DownloadIMtext"
-                                      downloadButton(outputId = "DownloadIMtext",
-                                                     label = "Download image matrix as txt",
-                                                     inline=T,
-                                                     icon = icon(name = "table",
-                                                                 lib = "font-awesome")
-                                      ),
-                                      
-                                    ),
-                                    
-                                  ),
-                                  # "DownloadIMrds"
-                                  p(
-                                    downloadButton(outputId = "DownloadIMrds",
-                                                   label = "Download image matrix as RDS",
-                                                   inline=T,
-                                                   icon = icon(name = "table",
-                                                               lib = "font-awesome")
-                                    ),
-                                  ),
-                                  # "DropIM"
-                                  checkboxInput(inputId = "dropIM",
-                                                label = 'Drop one-element dimensions',
-                                                value = TRUE,
-                                                width = '100%'
-                                  ),
-                                  ),
-                         ), # Col layout
-                         
-                         
-                         
                          
                          ### 5.13 Show the blockmodeling's results ####
                          ### "Tableblckmdlng", "Summaryblckmdlng"
@@ -805,7 +810,7 @@ ui <- fluidPage(
                            ),
                            ),
                          ), # mainPanel
-                       ), # Sidebar layout
+                       # ), # Sidebar layout
                      ), # Tab panel2
           
             ## 6. Show the Adjacency Matrix ####
