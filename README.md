@@ -23,5 +23,6 @@ The app’s many option and east of use make blockmodeling and basic network ana
 ### Advanced inputs
 
 |*File type*       |*File type*|*Extension*      |*R function*                  |*Package*          |
+|:-----------------|:----------|:----------------|:-----------------------------|:------------------|
 |Clustering result |R          |.RDS             |``readRDS()``                 |``base``           |
 |Preset block-model|R          |.RDS; .RData     |``readRDS()``; ``load()``     |``base``           |
