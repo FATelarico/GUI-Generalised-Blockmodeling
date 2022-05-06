@@ -1695,7 +1695,7 @@ server <- function(input, output, session) {
                                     value = AddAttrVal)
     }
     
-    ### 2.5 Delete isolated nodes ? ####
+    ### 2.5 Delete isolated nodes ?####
     if(input$DelIsolated){
       dat<-intergraph::asIgraph(x = dat)
       dat<-delete_vertices(graph = dat,v = V(dat)[degree(graph = dat)==0])
