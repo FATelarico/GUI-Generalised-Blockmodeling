@@ -12,7 +12,7 @@ The app’s many option and east of use make blockmodeling and basic network ana
 ![image](https://user-images.githubusercontent.com/100512813/159125221-be31c181-a0bb-4399-b410-16f45cb9cfc9.png)
 
 
-|*File type*       |*File type*|*Extension*      |*R function*                  |*Package*          |
+|                  |*File type*|*Extension*      |*R function*                  |*Package*          |
 |:-----------------|:----------|:----------------|:-----------------------------|:------------------|
 |Adjacency matrix  |plain/text |.txt; .csv; .tab |``read.delim()``              |``base``           |
 |Edge list         |plain/text |.txt; .csv; .tab |``read.delim()``              |``base``           |
@@ -22,7 +22,7 @@ The app’s many option and east of use make blockmodeling and basic network ana
 
 ### Advanced inputs
 
-|*File type*       |*File type*|*Extension*      |*R function*                  |*Package*          |
+|                  |*File type*|*Extension*      |*R function*                  |*Package*          |
 |:-----------------|:----------|:----------------|:-----------------------------|:------------------|
 |Clustering result |R          |.RDS             |``readRDS()``                 |``base``           |
 |Preset block-model|R          |.RDS; .RData     |``readRDS()``; ``load()``     |``base``           |
