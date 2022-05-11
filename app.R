@@ -2746,10 +2746,7 @@ server <- function(input, output, session) {
                    "column dominant"= "cfn",
                    "average block"="avg",
                    "do not care block (the error is always zero)"="dnc")
-      
-      updateSelectInput(inputId = 'blckmdlngBlockTypes',choices = choices)
-      updateSelectInput(inputId = 'TowardsDT',choices = choices)
-    } else if(input$blckmdlngApproach=='bin'){
+	} else if(input$blckmdlngApproach=='bin'){
       choices <- c("null or empty block"="nul",
                    "complete block"="com",
                    # "row-dominant"="rdo",
@@ -2761,9 +2758,6 @@ server <- function(input, output, session) {
                    "column dominant"= "cfn",
                    "density block"="den",
                    "do not care block (the error is always zero)"="dnc")
-      
-      updateSelectInput(inputId = 'blckmdlngBlockTypes',choices = choices)
-      updateSelectInput(inputId = 'TowardsDT',choices = choices)
     } else if(input$blckmdlngApproach!='bin'&input$blckmdlngApproach!='val'){
       choices <- c("null or empty block"="nul",
                    "complete block"="com",
@@ -2771,10 +2765,10 @@ server <- function(input, output, session) {
                    "row (f-)regular"="rre",
                    "column (f-)regular"= "cre",
                    "do not care block (the error is always zero)"="dnc")
-      
-      updateSelectInput(inputId = 'blckmdlngBlockTypes',choices = choices)
-      updateSelectInput(inputId = 'TowardsDT',choices = choices)
     }
+	
+	updateSelectInput(inputId = 'blckmdlngBlockTypes',choices = choices, selected=c('nul','com'))
+    updateSelectInput(inputId = 'TowardsDT',choices = choices)
   })
   
 }
