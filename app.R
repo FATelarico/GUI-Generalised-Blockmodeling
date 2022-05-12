@@ -837,7 +837,8 @@ ui <- fluidPage(
                             radioButtons(inputId = "adjSelector",
                                          label = "Which matrix do you want to use?",
                                          choiceNames = c("original","partitioned"),
-                                         choiceValues = c(1,2)
+                                         choiceValues = c(1,2),
+                                         selected = "2"
                             ),
                             ### 6.2 Select type of output ####
                             conditionalPanel(
