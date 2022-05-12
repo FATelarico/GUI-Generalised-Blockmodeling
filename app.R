@@ -2742,8 +2742,8 @@ server <- function(input, output, session) {
                    "(f-)regular block"="reg",
                    "row (f-)regular"="rre",
                    "column (f-)regular"= "cre",
-                   "row dominant"="rfn",
-                   "column dominant"= "cfn",
+                   "row functional"="rfn",
+                   "column functional"= "cfn",
                    "average block"="avg",
                    "do not care block (the error is always zero)"="dnc")
 	} else if(input$blckmdlngApproach=='bin'){
@@ -2754,8 +2754,8 @@ server <- function(input, output, session) {
                    "(f-)regular block"="reg",
                    "row (f-)regular"="rre",
                    "column (f-)regular"= "cre",
-                   "row dominant"="rfn",
-                   "column dominant"= "cfn",
+                   "row functional"="rfn",
+                   "column functional"= "cfn",
                    "density block"="den",
                    "do not care block (the error is always zero)"="dnc")
     } else if(input$blckmdlngApproach!='bin'&input$blckmdlngApproach!='val'){
