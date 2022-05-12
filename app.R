@@ -8,8 +8,10 @@ if(!require(visNetwork))install.packages('visNetwork')
 if(!require(intergraph))install.packages('intergraph')
 if(!require(DT))install.packages('DT')
 if(!require(shinybusy))install.packages('shinybusy')
+if(!require(shinyjs))install.packages('shinyjs')
 
 library(shiny)
+library(shinyjs)
 library(htmlwidgets)
 library(shinythemes)
 library(blockmodeling)
@@ -22,6 +24,8 @@ library(shinybusy)
 
 # Sect. 1 Inputs ####
 ui <- fluidPage(
+  
+  useShinyjs(), # Initialise Shinyjs
   
   includeCSS("./style.css"), # CSS Styles
   theme = shinytheme("united"),
@@ -319,47 +323,46 @@ ui <- fluidPage(
                                                     step = 1)
                                       ),
                                      
-                                     #### 5.1.3 Density parameter for block-type 'den' ####
-                                     #### "ParamM"
-                                     conditionalPanel(
-                                       condition ='input.blckmdlngApproach == "bin"',
+                                     hr(),
+                                     
+                                     ### 5.2 Block types ####
+                                     withTags(h4(b('Block types'))),
+                                     
+                                     #### 5.2.1 Block-type parameters
+                                     ##### 5.2.1 (A) Density parameter for block-type 'den' ####
+                                     ##### "ParamDensity"
+                                     shinyjs::hidden(
                                        numericInput(inputId = "ParamDensity",
                                                     label = 'Select the density',
                                                     value = NULL,
                                                     step = 1)
                                      ),
                                      
-                                     #### 5.1.3 Average parameter for block-type 'avg' ####
-                                     #### "ParamM"
-                                     conditionalPanel(
-                                       condition ='input.blckmdlngApproach == "val"',
+                                     ##### 5.2.1 (B) Average parameter for block-type 'avg' ####
+                                     ##### "ParamAverage"
+                                     shinyjs::hidden(
                                        numericInput(inputId = "ParamAverage",
                                                     label = 'Select the average',
                                                     value = NULL,
                                                     step = 1)
                                      ),
                                      
-                                     hr(),
-                                     
-                                     ### 5.2 Block types ####
-                                     withTags(h4(b('Block types'))),
-                                     
-                                     #### 5.2.1 Show/Hide Block-types weights' menu ####
+                                     #### 5.2.2 Show/Hide Block-types weights' menu ####
                                      #### 'blockTypeWeights_Show'
                                      checkboxInput(inputId = 'blockTypeWeights_Show',
                                                    label = 'Show/Hide block-types weights\' menu',
                                                    value = F),
                                      
-                                     #### 5.2.2 Types of of allowed blocktypes ####
+                                     #### 5.2.3 Types of of allowed blocktypes ####
                                      
-                                     ##### 5.2.2 (A) Pre-specified - Menu ####
+                                     ##### 5.2.3 (A) Pre-specified - Menu ####
                                      #### "blckmdlngPrespecified_Show"
                                      checkboxInput(inputId = "blckmdlngPrespecified_Show",
                                                    label = 'Show/Hide menu to pre-specify the allowed blocktypes',
                                                    value = FALSE
                                      ),
                                      
-                                     ##### 5.2.2 (B) Non pre-specified ####
+                                     ##### 5.2.3 (B) Non pre-specified ####
                                      #### "blckmdlngBlockTypes"
                                      conditionalPanel(
                                        condition = 'input.blckmdlngPrespecified_Switch == false',
@@ -370,7 +373,7 @@ ui <- fluidPage(
                                                    multiple = TRUE
                                        ),
                                        
-                                       #### 5.2.2 (C) Number of clusters (non pre-specified) ####
+                                       #### 5.2.3 (C) Number of clusters (non pre-specified) ####
                                        ### "blckmdlngNumClusters"
                                        numericInput(inputId = "blckmdlngNumClusters",
                                                     label = 'How many clusters to use in the generation of partitions?',
@@ -836,9 +839,11 @@ ui <- fluidPage(
                             withTags(h4(b("Select matrix"))),
                             radioButtons(inputId = "adjSelector",
                                          label = "Which matrix do you want to use?",
-                                         choiceNames = c("original","partitioned"),
-                                         choiceValues = c(1,2),
-                                         selected = "2"
+                                         choiceNames = c("original"),
+                                         choiceValues = c(1)
+                            ),
+                            p(id='BlckNotRunYet_Plot',style="color:red;",
+                              'Run the blockmodeling to be able to select\nthe partitioned network'
                             ),
                             ### 6.2 Select type of output ####
                             conditionalPanel(
@@ -922,17 +927,21 @@ ui <- fluidPage(
              fluidRow(
                ### 8.1 Select matrix to plot ####
                ## "PlotSelector"
-               column(3,
+               column(6,
                       withTags(i("Select network")),
                       radioButtons(inputId = "PlotSelector",
                                    label = "Which matrix to use?",
-                                   choiceNames = c("original","partitioned"),
-                                   choiceValues = c(1,2)
+                                   inline = T,
+                                   choiceNames = c("original"),
+                                   choiceValues = c(1),
                       ),
+                      p(id='BlckNotRunYet_Plot',style="color:red;",
+                        'Run the blockmodeling to be able to select\nthe partitioned network'
+                        ),
                ),
                ### 8.2 Select plotting sys ####
                ## "PlotSys"
-               column(3,
+               column(6,
                       withTags(i("Select output")),
                       radioButtons(inputId = "PlotSys",
                                    label = "Which package to use for plotting?",
@@ -1769,22 +1778,9 @@ server <- function(input, output, session) {
       
       ## 5.1 Plotting the partitioned adjacency matrix ####
       ## Loads blockmodeling's result
-      if(Blck$RunAlready==TRUE){
-        dat<-mdllng()
-        output<-plot(dat,main="",which = input$whichIM_adjPlot,
-                     mar=rep(input$MatrixPlotMargin,4))
-      } else {
-        dat<-GetAdjacencyMatrix()
-        dat<<-dat
-        ## Plots the original matrix
-        output<-plotMat(x = dat,ylab = '',xlab = '',plot.legend = F,
-                        main = '',title.line = '', mar=rep(input$MatrixPlotMargin,4))
-        
-        ## Notification "Plotting original matrix instead of partititoned" 
-        showNotification(ui = 'Plotting original matrix instead of partitioned because blockmodeling had not been ran yet',
-                         type = 'warning',
-                         duration = 20, closeButton = T)
-      }
+      dat<-mdllng()
+      output<-plot(dat,main="",which = input$whichIM_adjPlot,
+                   mar=rep(input$MatrixPlotMargin,4))
       ## Plots the partitioned matrix
       
     } else {
@@ -2731,10 +2727,10 @@ server <- function(input, output, session) {
       }
     )
   
-  ## 22. Update interface 
+  ## 22. Update interface ####
   
-  ### 22.1 Block-type selectors
-  ApproachBlockTypes<-observeEvent(input$blckmdlngApproach,{
+  ### 22.1 Block-type selectors ####
+  observe({
     if(input$blckmdlngApproach=='val'){
       choices <- c("null or empty block"="nul",
                    "complete block"="com",
@@ -2743,8 +2739,8 @@ server <- function(input, output, session) {
                    "(f-)regular block"="reg",
                    "row (f-)regular"="rre",
                    "column (f-)regular"= "cre",
-                   "row functional"="rfn",
-                   "column functional"= "cfn",
+                   "row dominant"="rfn",
+                   "column dominant"= "cfn",
                    "average block"="avg",
                    "do not care block (the error is always zero)"="dnc")
 	} else if(input$blckmdlngApproach=='bin'){
@@ -2755,8 +2751,8 @@ server <- function(input, output, session) {
                    "(f-)regular block"="reg",
                    "row (f-)regular"="rre",
                    "column (f-)regular"= "cre",
-                   "row functional"="rfn",
-                   "column functional"= "cfn",
+                   "row dominant"="rfn",
+                   "column dominant"= "cfn",
                    "density block"="den",
                    "do not care block (the error is always zero)"="dnc")
     } else if(input$blckmdlngApproach!='bin'&input$blckmdlngApproach!='val'){
@@ -2767,9 +2763,56 @@ server <- function(input, output, session) {
                    "column (f-)regular"= "cre",
                    "do not care block (the error is always zero)"="dnc")
     }
-	
-	updateSelectInput(inputId = 'blckmdlngBlockTypes',choices = choices, selected=c('nul','com'))
+    updateSelectInput(inputId = 'blckmdlngBlockTypes',choices = choices, selected=c('nul','com'))
     updateSelectInput(inputId = 'TowardsDT',choices = choices)
+  })
+  
+  ### 22.2 Parameter density and average ####
+  observe({
+    if(any(input$blckmdlngBlockTypes=='den')){
+      shinyjs::show(id = 'ParamDensity',anim = T,animType = 'slide')
+      shinyjs::hide(id = 'ParamAverage',anim = T,animType = 'fade')
+      dat<-NW()
+      updateNumericInput(inputId = 'ParamDensity',
+                         value = network::network.density(x = dat))
+      
+    } else if(any(input$blckmdlngBlockTypes=='avg')){
+      shinyjs::hide(id = 'ParamDensity',anim = T,animType = 'fade')
+      shinyjs::show(id = 'ParamAverage',anim = T,animType = 'slide')
+      M<-GetAdjacencyMatrix()
+      updateNumericInput(inputId = 'ParamAverage',
+                         value = mean(x = M),)
+    } else {
+      shinyjs::hide(id = 'ParamDensity',anim = T,animType = 'fade')
+      shinyjs::hide(id = 'ParamAverage',anim = T,animType = 'fade')
+    }
+    })
+  
+  ### 22.3 Plot selector ####
+  observe({
+    if(Blck$RunAlready){
+      updateRadioButtons(inputId = 'adjSelector',
+                         choiceNames = c("original","partitioned"),
+                         choiceValues = c(1,2),
+                         selected = 2,
+                         inline = T)
+      updateRadioButtons(inputId = 'PlotSelector',,
+                         choiceNames = c("original","partitioned"),
+                         choiceValues = c(1,2),
+                         selected = 2,
+                         inline = T)
+      shinyjs::hide(id = 'BlckNotRunYet_Plot')
+    } else {
+      updateRadioButtons(inputId = 'adjSelector',
+                         choiceNames = c("original"),
+                         choiceValues = c(1),
+                         selected = 1)
+      updateRadioButtons(inputId = 'PlotSelector',
+                         choiceNames = c("original"),
+                         choiceValues = c(1),
+                         selected = 1)
+      shinyjs::show(id = 'BlckNotRunYet_Plot')
+    }
   })
   
 }
