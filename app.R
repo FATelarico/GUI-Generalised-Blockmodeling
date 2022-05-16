@@ -2817,5 +2817,12 @@ server <- function(input, output, session) {
   
 }
 
+args = commandArgs(trailingOnly=TRUE)
+
 # Run the application 
-shinyApp(ui = ui, server = server)
+if(length(args)==0){
+  shinyApp(ui = ui, server = server)  
+} else {
+  shinyApp(ui = ui, server = server,options=list(launch.browser=as.logical(args[1])))
+}
+
