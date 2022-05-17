@@ -1,4 +1,6 @@
 # A GUI for Generalised Blockmodeling
+Sister project:[R Package *BlockmodelingGUI*](https://github.com/FATelarico/GUI-Generalised-Blockmodeling)
+
 
 ![image](https://user-images.githubusercontent.com/100512813/158572361-844a64ee-5784-4c82-a164-bf9bdcc917c0.png)
 
