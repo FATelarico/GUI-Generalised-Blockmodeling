@@ -2866,7 +2866,7 @@ server <- function(input, output, session) {
   output$CitationRIS <- downloadHandler(
     filename = 'GUI Citations.ris',
     content = function(file) {
-      writeLines(text = readRDS(file = './RIS Citation.RDS'),
+      writeLines(text = readRDS(file = './RIS_Citation.RDS'),
                  con = file)
     })
 
@@ -2874,7 +2874,7 @@ server <- function(input, output, session) {
   output$CitationBIB <- downloadHandler(
     filename = 'GUI Citations.bib',
     content = function(file) {
-      writeLines(text = readRDS(file = './Bib Citation.RDS'),
+      writeLines(text = readRDS(file = './Bib_Citation.RDS'),
                  con = file)
     })
 
@@ -2882,10 +2882,10 @@ server <- function(input, output, session) {
 
 args = commandArgs(trailingOnly=TRUE)
 
-# Run the application 
-shinyApp(ui = ui, server = server) 
+# Run the application
+shinyApp(ui = ui, server = server)
 if(length(args)==0){
-  shinyApp(ui = ui, server = server)  
+  shinyApp(ui = ui, server = server)
 } else {
   shinyApp(ui = ui, server = server,options=list(launch.browser=as.logical(args[1])))
 }
